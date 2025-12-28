@@ -19,14 +19,14 @@ const Sidebar = () => {
         {/* Menu */}
         <nav className="sidebar-menu">
 
-          <a className="sidebar-menu-item active" href="#">
+          <a className="sidebar-menu-item active" href="/Dashboard">
             <span className="sidebar-menu-icon">
               <RxDashboard />
             </span>
             <span className="sidebar-menu-text">Dashboard</span>
           </a>
 
-          <a className="sidebar-menu-item" href="#">
+          <a className="sidebar-menu-item" href="/Allposters">
             <span className="sidebar-menu-icon">
               <RiImageAiLine />
             </span>
