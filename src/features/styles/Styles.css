@@ -1,0 +1,54 @@
+/* Login styles */
+/* Container glass effect */
+/* Card */
+.login-card {
+  position: relative;
+}
+
+/* Inputs */
+.login-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: #111;
+  border: 1px solid rgba(255, 193, 7, 0.25);
+  border-radius: 0.75rem;
+  color: #fff;
+  font-size: 0.9rem;
+  outline: none;
+  transition: all 0.25s ease;
+}
+
+.login-input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.login-input:focus {
+  border-color: #ffc107;
+  box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.3);
+  background: #0e0e0e;
+}
+
+/* Button */
+.login-button {
+  padding: 0.8rem;
+  border-radius: 0.75rem;
+  background: linear-gradient(
+    135deg,
+    #ffc107,
+    #ffb300
+  );
+  color: #000;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  transition: all 0.2s ease;
+}
+
+.login-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px rgba(255, 193, 7, 0.45);
+}
+
+.login-button:active {
+  transform: translateY(0);
+  box-shadow: none;
+}

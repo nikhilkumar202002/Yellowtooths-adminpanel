@@ -1,9 +1,20 @@
-import React from 'react'
+import React from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Login from './features/auth/Login';
+import SuperAdmin from './features/dashboards/SuperAdmin';
 
 const App = () => {
   return (
-    <div className="bg-white text-black"><h1 className="text-3xl font-bold underline">Hello world!</h1></div>
+    <BrowserRouter>
+      <Routes>
+        {/* This sets Login as the first screen (Front) */}
+        <Route path="/" element={<Login />} />
+        
+        {/* This is the Dashboard screen */}
+        <Route path="/dashboard" element={<SuperAdmin />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
 
-export default App
+export default App;
