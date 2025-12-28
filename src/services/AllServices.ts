@@ -25,9 +25,18 @@ export interface FilmPoster {
 export const getAllPosters = async (): Promise<FilmPoster[]> => {
   try {
     const response = await api.get('/film-poster-designs/all');
-    // Assuming the API returns an array directly, or response.data.data
-    // Adjust '.data' based on if your API wraps the array in a 'data' property
     return response.data; 
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Poster single view
+
+export const getPosterById = async (id: string | number): Promise<FilmPoster> => {
+  try {
+    const response = await api.get(`/film-poster-designs/${id}`);
+    return response.data;
   } catch (error) {
     throw error;
   }

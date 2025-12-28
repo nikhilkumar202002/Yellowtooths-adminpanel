@@ -1,10 +1,6 @@
 import React from "react";
-import { NavLink } from "react-router-dom"; // 1. Import NavLink
 import Logo from "../../assets/logo_full_size.svg";
-import { RxDashboard } from "react-icons/rx";
-import { RiImageAiLine } from "react-icons/ri";
-import { GrUserWorker } from "react-icons/gr";
-import { MdOutlineWorkOutline } from "react-icons/md";
+import MenuList from "../common/MenuList"; // Import your new component
 import "./SidebarStyles.css";
 
 const Sidebar = () => {
@@ -17,58 +13,12 @@ const Sidebar = () => {
           <img src={Logo} alt="Yellowtooths Logo" />
         </div>
 
-        {/* Menu */}
+        {/* Menu Area */}
         <nav className="sidebar-menu">
-
-          <NavLink 
-            to="/dashboard" 
-            className={({ isActive }) => 
-              `sidebar-menu-item ${isActive ? "active" : ""}`
-            }
-          >
-            <span className="sidebar-menu-icon">
-              <RxDashboard />
-            </span>
-            <span className="sidebar-menu-text">Dashboard</span>
-          </NavLink>
-
-          <NavLink 
-            to="/Allposters" 
-            className={({ isActive }) => 
-              `sidebar-menu-item ${isActive ? "active" : ""}`
-            }
-          >
-            <span className="sidebar-menu-icon">
-              <RiImageAiLine />
-            </span>
-            <span className="sidebar-menu-text">Film Poster</span>
-          </NavLink>
-
-          <NavLink 
-            to="/employees" 
-            className={({ isActive }) => 
-              `sidebar-menu-item ${isActive ? "active" : ""}`
-            }
-          >
-            <span className="sidebar-menu-icon">
-              <GrUserWorker />
-            </span>
-            <span className="sidebar-menu-text">Employees</span>
-          </NavLink>
-
-          <NavLink 
-            to="/career" 
-            className={({ isActive }) => 
-              `sidebar-menu-item ${isActive ? "active" : ""}`
-            }
-          >
-            <span className="sidebar-menu-icon">
-              <MdOutlineWorkOutline />
-            </span>
-            <span className="sidebar-menu-text">Career</span>
-          </NavLink>
-
+          {/* Call the menu list here */}
+          <MenuList />
         </nav>
+        
       </div>
     </aside>
   );
