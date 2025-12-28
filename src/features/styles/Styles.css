@@ -52,3 +52,87 @@
   transform: translateY(0);
   box-shadow: none;
 }
+
+/* dashboard design */
+
+/* Stat Cards */
+.stat-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.05);
+  border-left: 4px solid #e5e7eb;
+}
+
+.stat-card h4 {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.stat-number {
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* Highlight Card */
+.stat-card.highlight {
+  border-left-color: #ffc107;
+}
+
+/* Panels */
+.panel {
+  background: #fff;
+  border-radius: 14px;
+  padding: 22px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.05);
+}
+
+.panel h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 16px;
+}
+
+/* Activity List */
+.activity-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.activity-list li {
+  padding: 10px 0;
+  font-size: 0.9rem;
+  color: #4b5563;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.activity-list li:last-child {
+  border-bottom: none;
+}
+
+/* Quick Actions */
+.quick-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.quick-actions button {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.quick-actions button:hover {
+  background: #ffc107;
+  color: #000;
+  border-color: #ffc107;
+}
