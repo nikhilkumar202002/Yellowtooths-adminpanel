@@ -41,3 +41,22 @@ export const getPosterById = async (id: string | number): Promise<FilmPoster> =>
     throw error;
   }
 };
+
+// create poster
+
+// Service function to create a new poster
+export const createPoster = async (posterData: FormData): Promise<any> => {
+  try {
+    const token = localStorage.getItem('token'); 
+
+    const response = await api.post('/film-poster-designs', posterData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        "Authorization": `Bearer ${token}` 
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
