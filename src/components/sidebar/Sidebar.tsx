@@ -1,4 +1,5 @@
 import React from "react";
+import { NavLink } from "react-router-dom"; // 1. Import NavLink
 import Logo from "../../assets/logo_full_size.svg";
 import { RxDashboard } from "react-icons/rx";
 import { RiImageAiLine } from "react-icons/ri";
@@ -19,33 +20,53 @@ const Sidebar = () => {
         {/* Menu */}
         <nav className="sidebar-menu">
 
-          <a className="sidebar-menu-item active" href="/Dashboard">
+          <NavLink 
+            to="/dashboard" 
+            className={({ isActive }) => 
+              `sidebar-menu-item ${isActive ? "active" : ""}`
+            }
+          >
             <span className="sidebar-menu-icon">
               <RxDashboard />
             </span>
             <span className="sidebar-menu-text">Dashboard</span>
-          </a>
+          </NavLink>
 
-          <a className="sidebar-menu-item" href="/Allposters">
+          <NavLink 
+            to="/Allposters" 
+            className={({ isActive }) => 
+              `sidebar-menu-item ${isActive ? "active" : ""}`
+            }
+          >
             <span className="sidebar-menu-icon">
               <RiImageAiLine />
             </span>
             <span className="sidebar-menu-text">Film Poster</span>
-          </a>
+          </NavLink>
 
-          <a className="sidebar-menu-item" href="#">
+          <NavLink 
+            to="/employees" 
+            className={({ isActive }) => 
+              `sidebar-menu-item ${isActive ? "active" : ""}`
+            }
+          >
             <span className="sidebar-menu-icon">
               <GrUserWorker />
             </span>
             <span className="sidebar-menu-text">Employees</span>
-          </a>
+          </NavLink>
 
-          <a className="sidebar-menu-item" href="#">
+          <NavLink 
+            to="/career" 
+            className={({ isActive }) => 
+              `sidebar-menu-item ${isActive ? "active" : ""}`
+            }
+          >
             <span className="sidebar-menu-icon">
               <MdOutlineWorkOutline />
             </span>
             <span className="sidebar-menu-text">Career</span>
-          </a>
+          </NavLink>
 
         </nav>
       </div>

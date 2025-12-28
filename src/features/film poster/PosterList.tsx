@@ -6,6 +6,10 @@ const PosterList = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
 
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const itemsPerPage = 10;
+
   useEffect(() => {
     fetchPosters();
   }, []);
@@ -13,7 +17,6 @@ const PosterList = () => {
   const fetchPosters = async () => {
     try {
       const data = await getAllPosters();
-      // Handle response structure (array vs object with data key)
       setPosters(Array.isArray(data) ? data : (data as any).data || []);
       setLoading(false);
     } catch (err) {
@@ -23,10 +26,90 @@ const PosterList = () => {
     }
   };
 
+  // Pagination Logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = posters.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(posters.length / itemsPerPage);
+
+  // Handlers
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(prev => prev + 1);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(prev => prev - 1);
+    }
+  };
+
+  // Skeleton Loading State
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-10 text-yellow-500 animate-pulse">
-        Loading Data...
+      <div className="space-y-4">
+        {/* Skeleton Table Container */}
+        <div className="border border-gray-800 rounded-xl overflow-hidden bg-[#121212] flex flex-col">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm text-gray-400">
+              {/* Keep Header Visible for Context */}
+              <thead className="bg-[#1a1a1a] text-xs uppercase font-semibold text-gray-200">
+                <tr>
+                  <th className="px-6 py-4 w-20">Poster</th>
+                  <th className="px-6 py-4">Film Details</th>
+                  <th className="px-6 py-4">Genre</th>
+                  <th className="px-6 py-4 text-center">Rating</th>
+                  <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              {/* Skeleton Body */}
+              <tbody className="divide-y divide-gray-800 animate-pulse">
+                {[...Array(5)].map((_, index) => (
+                  <tr key={index}>
+                    {/* Image Skeleton */}
+                    <td className="px-6 py-4">
+                      <div className="h-16 w-12 bg-gray-800/50 rounded border border-gray-700/30"></div>
+                    </td>
+
+                    {/* Film Details Skeleton */}
+                    <td className="px-6 py-4">
+                      <div className="h-4 w-48 bg-gray-800/50 rounded mb-2"></div>
+                      <div className="flex gap-2">
+                        <div className="h-3 w-12 bg-gray-800/30 rounded"></div>
+                        <div className="h-3 w-16 bg-gray-800/30 rounded"></div>
+                      </div>
+                    </td>
+
+                    {/* Genre Skeleton */}
+                    <td className="px-6 py-4">
+                      <div className="h-4 w-24 bg-gray-800/50 rounded"></div>
+                    </td>
+
+                    {/* Rating Skeleton */}
+                    <td className="px-6 py-4 text-center">
+                      <div className="h-6 w-12 bg-gray-800/50 rounded mx-auto"></div>
+                    </td>
+
+                    {/* Status Skeleton */}
+                    <td className="px-6 py-4">
+                      <div className="h-6 w-20 bg-gray-800/50 rounded-full"></div>
+                    </td>
+
+                    {/* Actions Skeleton */}
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex justify-end gap-3">
+                        <div className="h-5 w-5 bg-gray-800/50 rounded"></div>
+                        <div className="h-5 w-5 bg-gray-800/50 rounded"></div>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     );
   }
@@ -42,7 +125,7 @@ const PosterList = () => {
   return (
     <div className="space-y-4">
       {/* Table Container */}
-      <div className="border border-gray-800 rounded-xl overflow-hidden bg-[#121212]">
+      <div className="border border-gray-800 rounded-xl overflow-hidden bg-[#121212] flex flex-col">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-gray-400">
             <thead className="bg-[#1a1a1a] text-xs uppercase font-semibold text-gray-200">
@@ -56,7 +139,7 @@ const PosterList = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-800">
-              {posters.map((poster) => (
+              {currentItems.map((poster) => (
                 <tr key={poster.id} className="hover:bg-yellow-500/5 transition-colors">
                   
                   {/* Image Column */}
@@ -139,6 +222,42 @@ const PosterList = () => {
             </div>
           )}
         </div>
+
+        {/* Pagination Controls */}
+        {posters.length > 0 && (
+          <div className="bg-[#1a1a1a] border-t border-gray-800 px-6 py-4 flex items-center justify-between">
+            
+            {/* Results Counter */}
+            <span className="text-sm text-gray-500">
+              Showing <span className="text-white font-medium">{indexOfFirstItem + 1}</span> to <span className="text-white font-medium">{Math.min(indexOfLastItem, posters.length)}</span> of <span className="text-white font-medium">{posters.length}</span> results
+            </span>
+
+            {/* Buttons */}
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={handlePrevPage}
+                disabled={currentPage === 1}
+                className="px-3 py-1 text-sm rounded border border-gray-700 text-gray-300 hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Previous
+              </button>
+              
+              <div className="flex items-center gap-1">
+                 <span className="text-sm text-yellow-500 font-medium px-2">
+                    Page {currentPage} of {totalPages}
+                 </span>
+              </div>
+
+              <button 
+                onClick={handleNextPage}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1 text-sm rounded border border-gray-700 text-gray-300 hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
