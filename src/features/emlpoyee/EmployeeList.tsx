@@ -1,25 +1,25 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getAllEmployees, Employee, PaginatedResponse } from '../../services/AllServices';
+// 1. Import deleteEmployee service
+import { getAllEmployees, deleteEmployee, Employee, PaginatedResponse } from '../../services/AllServices';
+// 2. Import Toast utilities
+import { showSuccess, showError, showLoading, dismissToast } from '../../utils/Toast';
 import { LuEye, LuSearch, LuPlus, LuTrash2, LuPen } from "react-icons/lu";
 
 const EmployeeList = () => {
-  // 1. Change state to hold the full pagination object
   const [pagination, setPagination] = useState<PaginatedResponse<Employee> | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState<string>('');
   
-  // Track current page locally to handle refresh logic if needed
+  // Track current page
   const [currentPage, setCurrentPage] = useState<number>(1);
 
   useEffect(() => {
     fetchEmployees(1);
   }, []);
 
-  // 2. Fetch function accepting page number
   const fetchEmployees = async (page: number) => {
-    // Show loading only on initial load or search, not every page click if you prefer smoothness
     if (!pagination) setLoading(true); 
 
     try {
@@ -29,19 +29,50 @@ const EmployeeList = () => {
       setLoading(false);
     } catch (err) {
       console.error("Failed to fetch employees:", err);
-      setError('Failed to load employee list.');
+      // Only show error state if we have no data at all
+      if (!pagination) setError('Failed to load employee list.');
       setLoading(false);
     }
   };
 
-  // 3. Handle Search (Resets to Page 1)
+  // --- 3. Handle Delete Logic ---
+  const handleDelete = async (id: number) => {
+    if (window.confirm("Are you sure you want to delete this employee? This action cannot be undone.")) {
+      
+      // Start Loading Toast
+      const toastId = showLoading("Deleting employee...");
+
+      try {
+        await deleteEmployee(id);
+        
+        // On Success
+        dismissToast(toastId);
+        showSuccess("Employee deleted successfully!");
+
+        // Refresh List Logic
+        // If this was the last item on the page and we are not on page 1, go back a page
+        if (employees.length === 1 && currentPage > 1) {
+            fetchEmployees(currentPage - 1);
+        } else {
+            // Otherwise just refresh current page to fill the gap
+            fetchEmployees(currentPage);
+        }
+
+      } catch (err) {
+        // On Error
+        console.error("Delete failed:", err);
+        dismissToast(toastId);
+        showError("Failed to delete employee. Please try again.");
+      }
+    }
+  };
+
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
         fetchEmployees(1);
     }
   };
 
-  // 4. Handle Page Change
   const handlePageChange = (url: string | null) => {
     if (!url) return;
     try {
@@ -55,7 +86,6 @@ const EmployeeList = () => {
     }
   };
 
-  // Safely derive the list
   const employees = pagination?.data || [];
 
   if (loading && !pagination) {
@@ -85,12 +115,12 @@ const EmployeeList = () => {
                 className="w-full pl-10 pr-4 py-2.5 bg-[#121212] border border-gray-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500/50 focus:ring-1 focus:ring-yellow-500/50 transition-all text-sm"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyDown={handleSearch} // Trigger search on Enter
+                onKeyDown={handleSearch} 
             />
         </div>
 
         <Link 
-            to="/Employee/create" 
+            to="/employee/create" 
             className="flex items-center gap-2 bg-yellow-500 hover:bg-yellow-400 text-black px-5 py-2.5 rounded-lg font-semibold text-sm transition-all shadow-lg shadow-yellow-500/20 whitespace-nowrap"
         >
             <LuPlus size={18} /> Add Employee
@@ -165,7 +195,13 @@ const EmployeeList = () => {
                             <button className="text-gray-400 hover:text-white transition-colors" title="Edit">
                                 <LuPen size={18} />
                             </button>
-                            <button className="text-gray-400 hover:text-red-500 transition-colors" title="Delete">
+                            
+                            {/* Delete Button */}
+                            <button 
+                                onClick={() => handleDelete(employee.id)}
+                                className="text-gray-400 hover:text-red-500 transition-colors" 
+                                title="Delete"
+                            >
                                 <LuTrash2 size={18} />
                             </button>
                         </div>
@@ -184,7 +220,7 @@ const EmployeeList = () => {
           </table>
         </div>
 
-        {/* 5. Pagination Controls (Using API Links) */}
+        {/* Pagination Controls */}
         {pagination && pagination.links.length > 3 && (
           <div className="bg-[#1a1a1a] border-t border-gray-800 px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
             <span className="text-sm text-gray-500">
@@ -193,7 +229,6 @@ const EmployeeList = () => {
             
             <div className="flex flex-wrap items-center gap-1">
               {pagination.links.map((link, index) => {
-                 // Format labels (Previous/Next arrows)
                  const label = link.label
                     .replace('&laquo; Previous', '← Prev')
                     .replace('Next &raquo;', 'Next →');

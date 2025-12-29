@@ -183,3 +183,18 @@ export const createEmployee = async (employeeData: FormData): Promise<any> => {
     throw error;
   }
 };
+
+
+// 3. Delete Employee (NEW)
+export const deleteEmployee = async (id: number | string): Promise<any> => {
+  try {
+    const token = localStorage.getItem('token');
+    // Endpoint: DELETE /employee-photos/{id}
+    const response = await api.delete(`/employee-photos/${id}`, {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
