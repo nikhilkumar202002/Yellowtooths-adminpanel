@@ -7,6 +7,7 @@ import Layout from './components/Layout'; // Import the layout
 import PosterList from './features/film poster/PosterList';
 import PosterSingle from './features/film poster/PosterSingle';
 import PosterCreate from './features/film poster/PosterCreate';
+import PosterEdit from './features/film poster/PosterEdit';
 
 const App = () => {
   return (
@@ -19,6 +20,7 @@ const App = () => {
           <Route path="/Dashboard" element={<SuperAdmin />} />
           <Route path="/Allposters" element={<PosterList />} />
           <Route path="/poster/:id" element={<PosterSingle />} />
+          <Route path="/poster/edit/:id" element={<PosterEdit />} />
           <Route path="/poster/create" element={<PosterCreate />} />
         </Route>
       </Routes>

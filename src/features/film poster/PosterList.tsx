@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getAllPosters, deletePoster, FilmPoster, PaginatedResponse } from '../../services/AllServices';
-import { LuEye, LuSearch, LuPlus, LuFilter, LuTrash2 } from "react-icons/lu";
-// 1. Import toast utilities
+import { LuEye, LuSearch, LuPlus, LuFilter, LuTrash2, LuEdit } from "react-icons/lu";
 import { showSuccess, showError, showLoading, dismissToast } from '../../utils/Toast';
 
 const PosterList = () => {
@@ -242,6 +241,15 @@ const PosterList = () => {
                             >
                                 <LuTrash2 size={18} />
                             </button>
+
+                            <Link 
+                                to={`/poster/edit/${poster.id}`}
+                                className="text-gray-400 hover:text-white transition-colors" 
+                                title="Edit"
+                              >
+                                  {/* Use an Edit Icon here, e.g., LuEdit or similar */}
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                              </Link>
                         </div>
                       </td>
 

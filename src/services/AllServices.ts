@@ -113,3 +113,20 @@ export const deletePoster = async (id: number | string): Promise<any> => {
     throw error;
   }
 };
+
+// 4. Update (POST + _method: PUT)
+export const updatePoster = async (id: string | number, posterData: FormData): Promise<any> => {
+  try {
+    const token = localStorage.getItem('token');
+    // Ensure _method is set to PUT so backend treats it as an update
+    posterData.append('_method', 'PUT'); 
+
+    const response = await api.post(`/film-poster-designs/${id}`, posterData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        "Authorization": `Bearer ${token}`
+      },
+    });
+    return response.data;
+  } catch (error) { throw error; }
+};
