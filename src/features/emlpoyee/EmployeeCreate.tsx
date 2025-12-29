@@ -80,7 +80,7 @@ const EmployeeCreate = () => {
 
       dismissToast(toastId);
       showSuccess("Employee created successfully!");
-      navigate('/employee-list'); // Redirect to list
+      navigate('/AllEmployees'); // Redirect to list
       
     } catch (err: any) {
       console.error(err);
