@@ -1,6 +1,5 @@
-import React from 'react';
+
 import { NavLink } from 'react-router-dom';
-// Import Icons
 import { RxDashboard } from "react-icons/rx";
 import { RiImageAiLine } from "react-icons/ri";
 import { GrUserWorker } from "react-icons/gr";

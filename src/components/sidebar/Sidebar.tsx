@@ -1,4 +1,4 @@
-import React from "react";
+
 import Logo from "../../assets/logo_full_size.svg";
 import MenuList from "../common/MenuList"; // Import your new component
 import "./SidebarStyles.css";

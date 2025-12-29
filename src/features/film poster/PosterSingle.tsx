@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from 'react';
+// Removed unused 'React' import
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getPosterById, FilmPoster } from '../../services/AllServices';
+// Added 'type' keyword for FilmPoster interface
+import { getPosterById, type FilmPoster } from '../../services/AllServices';
 import { 
   FiArrowLeft, FiCalendar, FiGlobe, FiStar, FiPlay, 
   FiCheckCircle, FiXCircle, FiMaximize2, FiX 

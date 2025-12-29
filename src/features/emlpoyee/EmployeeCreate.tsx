@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createEmployee } from '../../services/AllServices';
 import { 
-  LuArrowLeft, LuSave, LuImage, LuUpload, LuX 
+  LuArrowLeft, LuSave, LuImage, LuUpload, LuX, LuLoader 
 } from 'react-icons/lu';
 import { showSuccess, showError, showLoading, dismissToast } from '../../utils/Toast';
 
@@ -80,7 +80,7 @@ const EmployeeCreate = () => {
 
       dismissToast(toastId);
       showSuccess("Employee created successfully!");
-      navigate('/AllEmployees'); // Redirect to list
+      navigate('/employee-list'); // Redirect to list
       
     } catch (err: any) {
       console.error(err);
@@ -245,7 +245,7 @@ const EmployeeCreate = () => {
                 >
                     {submitting ? (
                         <>
-                            <LuLoader2 className="animate-spin" size={20} /> Creating...
+                            <LuLoader className="animate-spin" size={20} /> Creating...
                         </>
                     ) : (
                         <>

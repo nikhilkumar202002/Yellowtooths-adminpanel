@@ -1,4 +1,4 @@
-import React from "react";
+
 import "./HeaderStyles.css";
 import { IoSettingsOutline } from "react-icons/io5";
 import Avatar from "../../assets/avatar.jpg";

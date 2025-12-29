@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-// 1. Import deleteEmployee service
-import { getAllEmployees, deleteEmployee, Employee, PaginatedResponse } from '../../services/AllServices';
-// 2. Import Toast utilities
+// Added 'type' keyword for interfaces
+import { getAllEmployees, deleteEmployee, type Employee, type PaginatedResponse } from '../../services/AllServices';
 import { showSuccess, showError, showLoading, dismissToast } from '../../utils/Toast';
-import { LuEye, LuSearch, LuPlus, LuTrash2, LuPen } from "react-icons/lu";
+import {  LuSearch, LuPlus, LuTrash2, LuPen } from "react-icons/lu";
 
 const EmployeeList = () => {
   const [pagination, setPagination] = useState<PaginatedResponse<Employee> | null>(null);
@@ -51,7 +50,7 @@ const EmployeeList = () => {
 
         // Refresh List Logic
         // If this was the last item on the page and we are not on page 1, go back a page
-        if (employees.length === 1 && currentPage > 1) {
+        if (pagination && pagination.data.length === 1 && currentPage > 1) {
             fetchEmployees(currentPage - 1);
         } else {
             // Otherwise just refresh current page to fill the gap

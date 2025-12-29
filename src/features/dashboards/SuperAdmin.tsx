@@ -1,5 +1,4 @@
-import React from "react";
-// 1. Import the icons you need
+
 import { 
   FiUsers, 
   FiShield, 

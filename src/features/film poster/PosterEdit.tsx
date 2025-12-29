@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getPosterById, updatePoster, FilmPoster } from '../../services/AllServices';
+// 1. Added 'type' keyword for FilmPoster
+import { getPosterById, updatePoster, type FilmPoster } from '../../services/AllServices';
 import { 
   FiArrowLeft, FiSave, FiPlus, FiMinus, FiCheck, FiImage, FiLoader 
 } from 'react-icons/fi';
@@ -282,7 +283,8 @@ const PosterEdit = () => {
             {/* --- MASONRY LAYOUT CONTAINER --- */}
             <div className="columns-2 gap-4 space-y-4">
                 {allMediaItems.length > 0 ? (
-                    allMediaItems.map((item, index) => (
+                    // 2. Removed unused 'index' param
+                    allMediaItems.map((item) => (
                         <div 
                             key={`${item.type}-${item.idOrIndex}`}
                             onClick={() => handleSetFeatured(item.type, item.idOrIndex)}

@@ -1,8 +1,8 @@
-import React from 'react';
-import { toast, Toaster, ToastOptions } from 'react-hot-toast';
+import { toast, Toaster, type DefaultToastOptions } from 'react-hot-toast';
 
 // Custom styles to match your Yellow/Dark theme
-const toastConfig: ToastOptions = {
+// We use DefaultToastOptions here because it allows 'success' and 'error' keys
+const toastConfig: DefaultToastOptions = {
   style: {
     background: '#1a1a1a',
     color: '#fff',

@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from 'react';
+// 1. Removed unused 'React' import
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getAllPosters, deletePoster, FilmPoster, PaginatedResponse } from '../../services/AllServices';
-import { LuEye, LuSearch, LuPlus, LuFilter, LuTrash2, LuEdit } from "react-icons/lu";
+// 2. Added 'type' keyword for interfaces
+import { getAllPosters, deletePoster, type FilmPoster, type PaginatedResponse } from '../../services/AllServices';
+import { LuEye, LuSearch, LuPlus, LuFilter, LuTrash2 } from "react-icons/lu";
 import { showSuccess, showError, showLoading, dismissToast } from '../../utils/Toast';
 
 const PosterList = () => {
@@ -26,7 +28,6 @@ const PosterList = () => {
 
   const fetchPosters = async (page: number) => {
     // Only show full loading state if we don't have data yet (initial load)
-    // This prevents the UI from flashing white during a refresh
     if (!pagination) setLoading(true);
 
     try {
@@ -36,37 +37,31 @@ const PosterList = () => {
       setLoading(false);
     } catch (err) {
       console.error("Failed to fetch posters:", err);
-      // Only set main error if page is empty
       if (!pagination) setError('Failed to load film posters.');
       setLoading(false);
     }
   };
 
-  // 2. Updated Handle Delete Logic with Toast & Refresh
+  // Handle Delete Logic with Toast & Refresh
   const handleDelete = async (id: number) => {
     if (window.confirm("Are you sure you want to delete this poster? This action cannot be undone.")) {
       
-      // Start Loading Toast
       const toastId = showLoading("Deleting poster...");
 
       try {
         await deletePoster(id);
         
-        // On Success: Dismiss loader, show success
         dismissToast(toastId);
         showSuccess("Poster deleted successfully");
 
-        // Refresh the list logic
-        // If this was the last item on the page and we are not on page 1, go back a page
+        // Refresh logic: go back a page if last item deleted, else refresh current
         if (pagination?.data.length === 1 && currentPage > 1) {
             fetchPosters(currentPage - 1);
         } else {
-            // Otherwise just refresh current page
             fetchPosters(currentPage);
         }
 
       } catch (err) {
-        // On Error: Dismiss loader, show error
         dismissToast(toastId);
         console.error("Delete failed:", err);
         showError("Failed to delete the poster.");
@@ -247,7 +242,6 @@ const PosterList = () => {
                                 className="text-gray-400 hover:text-white transition-colors" 
                                 title="Edit"
                               >
-                                  {/* Use an Edit Icon here, e.g., LuEdit or similar */}
                                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
                               </Link>
                         </div>
