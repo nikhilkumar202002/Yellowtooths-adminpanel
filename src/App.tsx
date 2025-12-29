@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Login from './features/auth/Login';
+import { GlobalToaster } from './utils/Toast';
 import SuperAdmin from './features/dashboards/SuperAdmin';
 import Layout from './components/Layout'; // Import the layout
 import PosterList from './features/film poster/PosterList';
@@ -10,6 +11,7 @@ import PosterCreate from './features/film poster/PosterCreate';
 const App = () => {
   return (
     <BrowserRouter>
+    <GlobalToaster />
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/login" element={<Login />} />

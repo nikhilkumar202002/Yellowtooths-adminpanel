@@ -1,5 +1,27 @@
 import api from "./axios";
 
+export interface PaginationLink {
+  url: string | null;
+  label: string;
+  active: boolean;
+}
+
+export interface PaginatedResponse<T> {
+  current_page: number;
+  data: T[];
+  first_page_url: string;
+  from: number;
+  last_page: number;
+  last_page_url: string;
+  links: PaginationLink[];
+  next_page_url: string | null;
+  path: string;
+  per_page: number;
+  prev_page_url: string | null;
+  to: number;
+  total: number;
+}
+
 export interface PosterImage {
   id: number;
   film_poster_design_id: string;
@@ -21,16 +43,31 @@ export interface FilmPoster {
   images: PosterImage[];
 }
 
-// Service function to fetch all posters
-export const getAllPosters = async (): Promise<FilmPoster[]> => {
+export const getAllPosters = async (
+  page: number = 1, 
+  search: string = '', 
+  year: string = ''
+): Promise<PaginatedResponse<FilmPoster>> => {
   try {
-    const response = await api.get('/film-poster-designs/all');
+    const token = localStorage.getItem('token');
+    
+    // Build Query Parameters
+    const params = new URLSearchParams();
+    params.append('page', page.toString());
+    if (search) params.append('search', search); // Sending search to backend
+    if (year && year !== 'All') params.append('year', year); // Sending year to backend
+
+    const response = await api.get(`/film-poster-designs?${params.toString()}`, {
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    });
+    
     return response.data; 
   } catch (error) {
     throw error;
   }
 };
-
 // Poster single view
 
 export const getPosterById = async (id: string | number): Promise<FilmPoster> => {
@@ -54,6 +91,22 @@ export const createPoster = async (posterData: FormData): Promise<any> => {
         "Content-Type": "multipart/form-data",
         "Authorization": `Bearer ${token}` 
       },
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+
+// 4. Delete Poster 
+export const deletePoster = async (id: number | string): Promise<any> => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await api.delete(`/film-poster-designs/${id}`, {
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
     });
     return response.data;
   } catch (error) {
