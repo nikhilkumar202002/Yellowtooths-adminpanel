@@ -1,24 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import ReCAPTCHA from "react-google-recaptcha"; 
 import { login } from "../../services/authService";
 import "../styles/Styles.css";
 
 const Login = () => {
   const navigate = useNavigate();
+  // Ref for the reCAPTCHA widget
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
 
-  // 1. State for form data and UI status
+  // State
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
- const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
 
     try {
-      const data = await login(email, password);
+      // 1. Execute reCAPTCHA and get the token
+      const token = await recaptchaRef.current?.executeAsync();
+
+      if (!token) {
+        throw new Error("reCAPTCHA verification failed. Please try again.");
+      }
+
+      // 2. Pass the token to the login service
+      const data = await login(email, password, token);
+      
       console.log("Login successful:", data);
       if (data.token) {
         localStorage.setItem('token', data.token);
@@ -27,8 +39,11 @@ const Login = () => {
 
     } catch (err: any) {
       console.error("Login failed:", err);
-      const errorMessage = err.response?.data?.message || 'Invalid email or password.';
+      const errorMessage = err.response?.data?.message || err.message || 'Invalid email or password.';
       setError(errorMessage);
+      
+      // Reset captcha on error so user can try again
+      recaptchaRef.current?.reset();
     } finally {
       setIsLoading(false);
     }
@@ -86,6 +101,14 @@ const Login = () => {
                   placeholder="••••••••"
                 />
               </div>
+
+              {/* Invisible reCAPTCHA Component */}
+              <ReCAPTCHA
+                ref={recaptchaRef}
+                size="invisible" // This makes it invisible
+                sitekey="6Lf3kDosAAAAAGN0fm1IaNL-y2kguEvXaUCArG41" // Replace with your actual Site Key
+                theme="dark" // Matches your dark theme
+              />
 
               <button 
                 type="submit" 
