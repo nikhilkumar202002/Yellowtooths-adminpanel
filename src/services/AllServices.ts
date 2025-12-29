@@ -43,6 +43,17 @@ export interface FilmPoster {
   images: PosterImage[];
 }
 
+export interface Employee {
+  id: number;
+  name: string;
+  designation: string;
+  photo: string; 
+  status: string;
+  position_number: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export const getAllPosters = async (
   page: number = 1, 
   search: string = '', 
@@ -129,4 +140,46 @@ export const updatePoster = async (id: string | number, posterData: FormData): P
     });
     return response.data;
   } catch (error) { throw error; }
+};
+
+
+// Employee Apis
+export const getAllEmployees = async (
+  page: number = 1, 
+  search: string = ''
+): Promise<PaginatedResponse<Employee>> => {
+  try {
+    const token = localStorage.getItem('token');
+    
+    // Build query params
+    const params = new URLSearchParams();
+    params.append('page', page.toString());
+    if (search) params.append('search', search);
+
+    const response = await api.get(`/employee-photos?${params.toString()}`, {
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    });
+    
+    return response.data; 
+  } catch (error) {
+    throw error;
+  }
+};
+
+// 2. Create Employee (NEW)
+export const createEmployee = async (employeeData: FormData): Promise<any> => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await api.post('/employee-photos', employeeData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        "Authorization": `Bearer ${token}`
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };

@@ -21,7 +21,7 @@ const MenuList = () => {
     },
     {
       name: "Employees",
-      path: "/employees",
+      path: "/AllEmployees",
       icon: <GrUserWorker />,
     },
     {

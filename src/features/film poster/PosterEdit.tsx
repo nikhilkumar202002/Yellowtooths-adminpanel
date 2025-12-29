@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-// Removed deletePosterImage to prevent accidental usage
 import { getPosterById, updatePoster, FilmPoster } from '../../services/AllServices';
 import { 
-  FiArrowLeft, FiSave, FiPlus, FiMinus, FiCheck, FiImage, FiLoader, FiUpload 
+  FiArrowLeft, FiSave, FiPlus, FiMinus, FiCheck, FiImage, FiLoader 
 } from 'react-icons/fi';
 import { showSuccess, showError, showLoading, dismissToast } from '../../utils/Toast';
 
@@ -36,7 +35,6 @@ const PosterEdit = () => {
   const [newPreviews, setNewPreviews] = useState<string[]>([]);
   
   // Unified State for Main Image Selection
-  // stores { type: 'existing' | 'new', idOrIndex: number } to track selection
   const [activeMainImage, setActiveMainImage] = useState<{ type: 'existing' | 'new', idOrIndex: number } | null>(null);
 
   // Fetch Data
@@ -64,8 +62,7 @@ const PosterEdit = () => {
       if (data.images && data.images.length > 0) {
         setExistingImages(data.images);
         
-        // Auto-detect current main image to check the box
-        // We compare file paths to see which one is currently active
+        // Auto-detect current main image
         const mainImgMatch = data.images.find(img => img.file_path === data.main_image);
         if (mainImgMatch) {
             setActiveMainImage({ type: 'existing', idOrIndex: mainImgMatch.id });
@@ -87,8 +84,7 @@ const PosterEdit = () => {
   const handleAddImage = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const files = Array.from(e.target.files);
-      // Optional: 2MB Limit Check
-      const validFiles = files.filter(file => file.size <= 2 * 1024 * 1024);
+      const validFiles = files.filter(file => file.size <= 2 * 1024 * 1024); // 2MB Limit
       const previews = validFiles.map(file => URL.createObjectURL(file));
 
       setNewFiles(prev => [...prev, ...validFiles]);
@@ -97,65 +93,78 @@ const PosterEdit = () => {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const handleRemoveNewImage = (index: number) => {
-    // We allow removing NEW (unsaved) images
+  const handleRemoveNewImage = (e: React.MouseEvent, index: number) => {
+    e.stopPropagation();
     URL.revokeObjectURL(newPreviews[index]);
     setNewFiles(prev => prev.filter((_, i) => i !== index));
     setNewPreviews(prev => prev.filter((_, i) => i !== index));
     
-    // Clear selection if we removed the active new image
     if (activeMainImage?.type === 'new' && activeMainImage.idOrIndex === index) {
         setActiveMainImage(null);
     } 
     else if (activeMainImage?.type === 'new' && activeMainImage.idOrIndex > index) {
-        // Shift index if we deleted an image above it
         setActiveMainImage({ ...activeMainImage, idOrIndex: activeMainImage.idOrIndex - 1 });
     }
   };
 
-  // --- Unified "Set Featured" Handler ---
   const handleSetFeatured = (type: 'existing' | 'new', idOrIndex: number) => {
-    // Toggle off if clicking the same one, otherwise set new
     if (activeMainImage?.type === type && activeMainImage.idOrIndex === idOrIndex) {
-        setActiveMainImage(null); 
+        // Optional: Toggle off
     } else {
         setActiveMainImage({ type, idOrIndex });
     }
   };
 
+  // --- Combine Images for Masonry Display ---
+  const allMediaItems = useMemo(() => {
+    const newItems = newPreviews.map((src, index) => ({
+        type: 'new' as const,
+        idOrIndex: index,
+        src: src,
+        isFeatured: activeMainImage?.type === 'new' && activeMainImage.idOrIndex === index
+    }));
+
+    const existingItems = existingImages.map((img) => ({
+        type: 'existing' as const,
+        idOrIndex: img.id,
+        src: img.file_path,
+        isFeatured: activeMainImage?.type === 'existing' && activeMainImage.idOrIndex === img.id
+    }));
+
+    // Combine them (New first, or however you prefer)
+    return [...newItems, ...existingItems];
+  }, [newPreviews, existingImages, activeMainImage]);
+
+
   // --- Submit Logic ---
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!id) return;
-    
     setSubmitting(true);
     const toastId = showLoading("Updating poster...");
 
     try {
       const data = new FormData();
 
-      // 1. Text Fields
       Object.keys(formData).forEach(key => {
         const val = formData[key as keyof typeof formData];
         if (val !== null && val !== undefined) data.append(key, val);
       });
 
-      // 2. New Images
       newFiles.forEach((file) => {
         data.append('images[]', file);
       });
 
-      // 3. Featured Image Logic
       if (activeMainImage) {
           if (activeMainImage.type === 'existing') {
-              // Tell backend: "Use this EXISTING image ID as main"
-              data.append('active_main_image_id', activeMainImage.idOrIndex.toString());
+              // Find the INDEX of this image in the existingImages array
+              const index = existingImages.findIndex(img => img.id === activeMainImage.idOrIndex);
+              if (index !== -1) {
+                data.append('main_image_index', index.toString());
+              }
           } 
           else if (activeMainImage.type === 'new') {
-              // Tell backend: "Use the NEW file at this index as main"
               data.append('main_image_index', activeMainImage.idOrIndex.toString());
-              
-              // Explicitly attach the main file if backend needs 'main_image' key specifically
               if (newFiles[activeMainImage.idOrIndex]) {
                   data.append('main_image', newFiles[activeMainImage.idOrIndex]);
               }
@@ -163,7 +172,6 @@ const PosterEdit = () => {
       }
 
       await updatePoster(id, data);
-
       dismissToast(toastId);
       showSuccess("Poster updated successfully!");
       navigate('/Allposters');
@@ -183,7 +191,7 @@ const PosterEdit = () => {
   if (fetching) return <div className="flex justify-center items-center h-96 text-yellow-500 animate-pulse">Loading Data...</div>;
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 pb-20 animate-fade-in">
+    <div className="w-full mx-auto space-y-6 pb-20 animate-fade-in">
       
       {/* Header */}
       <div className="flex items-center justify-between border-b border-gray-800 pb-5">
@@ -197,10 +205,8 @@ const PosterEdit = () => {
 
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
-        {/* LEFT COLUMN: All Text Fields (8 Cols) */}
+        {/* LEFT COLUMN: Fields (8 Cols) */}
         <div className="lg:col-span-8 space-y-6">
-          
-          {/* Card 1: Basic Info */}
           <div className="bg-[#0b0b0b] border border-gray-800 rounded-xl p-6">
              <h3 className="text-lg font-semibold text-white mb-6 border-l-4 border-yellow-500 pl-3">Basic Information</h3>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -227,7 +233,6 @@ const PosterEdit = () => {
              </div>
           </div>
 
-          {/* Card 2: Settings & Meta (Restored) */}
           <div className="bg-[#0b0b0b] border border-gray-800 rounded-xl p-6">
              <h3 className="text-lg font-semibold text-white mb-6 border-l-4 border-yellow-500 pl-3">Settings</h3>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -261,69 +266,88 @@ const PosterEdit = () => {
           </div>
         </div>
 
-        {/* RIGHT COLUMN: Images (4 Cols) */}
+        {/* RIGHT COLUMN: Images (Masonry Layout) */}
         <div className="lg:col-span-4 space-y-6">
           <div className="bg-[#0b0b0b] border border-gray-800 rounded-xl p-6 sticky top-6">
-            <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-white flex items-center gap-2"><FiImage /> Media</h3>
-                <button type="button" onClick={() => fileInputRef.current?.click()} className="text-yellow-500 hover:bg-yellow-500/10 px-3 py-1.5 rounded-lg text-sm font-bold border border-yellow-500/30 flex items-center gap-2">
-                    <FiPlus /> Add New
+            
+            {/* Header / Add Button */}
+            <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-semibold text-white flex items-center gap-2"><FiImage /> Gallery</h3>
+                <button type="button" onClick={() => fileInputRef.current?.click()} className="text-yellow-500 hover:bg-yellow-500/10 px-4 py-2 rounded-lg text-sm font-bold border border-yellow-500/30 flex items-center gap-2 transition-colors">
+                    <FiPlus /> Upload
                 </button>
             </div>
             <input type="file" hidden multiple accept="image/*" ref={fileInputRef} onChange={handleAddImage} />
 
-            <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
-                
-                {/* 1. NEW UPLOADS */}
-                {newPreviews.map((src, index) => {
-                    const isFeatured = activeMainImage?.type === 'new' && activeMainImage.idOrIndex === index;
-                    return (
-                        <div key={`new-${index}`} className={`flex items-center gap-4 p-3 rounded-lg border transition-all ${isFeatured ? 'border-yellow-500 bg-yellow-500/5' : 'border-gray-800 bg-[#121212]'}`}>
-                            <img src={src} alt="New" className="h-16 w-12 object-cover rounded bg-black" />
-                            <div className="flex-1">
-                                <p className="text-xs text-green-400 mb-1 font-bold">New Upload</p>
-                                <label className="flex items-center gap-2 cursor-pointer select-none">
-                                    <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isFeatured ? 'bg-yellow-500 border-yellow-500' : 'border-gray-600'}`}>
-                                        {isFeatured && <FiCheck size={14} className="text-black" />}
-                                    </div>
-                                    <input type="checkbox" className="hidden" checked={isFeatured} onChange={() => handleSetFeatured('new', index)} />
-                                    <span className={`text-sm font-medium ${isFeatured ? 'text-yellow-500' : 'text-gray-300'}`}>
-                                        {isFeatured ? 'Featured Image' : 'Set as Featured'}
-                                    </span>
-                                </label>
-                            </div>
-                            <button type="button" onClick={() => handleRemoveNewImage(index)} className="p-2 hover:bg-red-500/20 hover:text-red-500 text-gray-400 rounded-lg">
-                                <FiMinus size={18} />
-                            </button>
-                        </div>
-                    );
-                })}
+            {/* --- MASONRY LAYOUT CONTAINER --- */}
+            <div className="columns-2 gap-4 space-y-4">
+                {allMediaItems.length > 0 ? (
+                    allMediaItems.map((item, index) => (
+                        <div 
+                            key={`${item.type}-${item.idOrIndex}`}
+                            onClick={() => handleSetFeatured(item.type, item.idOrIndex)}
+                            className={`
+                                relative break-inside-avoid mb-4 rounded-xl overflow-hidden cursor-pointer transition-all duration-300
+                                border-2 group
+                                ${item.isFeatured 
+                                    ? 'border-yellow-500 shadow-[0_0_20px_rgba(234,179,8,0.4)] scale-[1.02]' 
+                                    : 'border-transparent hover:border-gray-600'
+                                }
+                            `}
+                        >
+                            {/* Image with Variable Height */}
+                            <img 
+                                src={item.src} 
+                                alt="Poster" 
+                                className={`w-full h-auto block bg-gray-900 ${!item.isFeatured ? 'opacity-80 group-hover:opacity-100' : ''}`} 
+                            />
 
-                {/* 2. EXISTING IMAGES (No Delete Option) */}
-                {existingImages.length > 0 && (
-                    <div className="pt-4 border-t border-gray-800">
-                        <p className="text-xs font-bold text-gray-500 uppercase mb-3">Saved Images</p>
-                        {existingImages.map((img) => {
-                             const isFeatured = activeMainImage?.type === 'existing' && activeMainImage.idOrIndex === img.id;
-                             return (
-                                <div key={img.id} className={`flex items-center gap-4 p-3 rounded-lg border transition-all ${isFeatured ? 'border-yellow-500 bg-yellow-500/5' : 'border-gray-800 bg-[#121212]'}`}>
-                                    <img src={img.file_path} alt="Existing" className="h-16 w-12 object-cover rounded bg-black" />
-                                    <div className="flex-1">
-                                        <p className="text-xs text-gray-500 mb-1">ID: {img.id}</p>
-                                        <label className="flex items-center gap-2 cursor-pointer select-none">
-                                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isFeatured ? 'bg-yellow-500 border-yellow-500' : 'border-gray-600'}`}>
-                                                {isFeatured && <FiCheck size={14} className="text-black" />}
-                                            </div>
-                                            <input type="checkbox" className="hidden" checked={isFeatured} onChange={() => handleSetFeatured('existing', img.id)} />
-                                            <span className={`text-sm font-medium ${isFeatured ? 'text-yellow-500' : 'text-gray-300'}`}>
-                                                {isFeatured ? 'Featured Image' : 'Set as Featured'}
-                                            </span>
-                                        </label>
+                            {/* Overlay Controls (Checkbox) */}
+                            <div className={`
+                                absolute bottom-0 left-0 right-0 p-3 
+                                flex items-center justify-between
+                                bg-gradient-to-t from-black/90 via-black/60 to-transparent
+                            `}>
+                                {/* Checkbox Logic */}
+                                <div className="flex items-center gap-2">
+                                    <div className={`
+                                        w-5 h-5 rounded border flex items-center justify-center transition-colors shadow-sm
+                                        ${item.isFeatured 
+                                            ? 'bg-yellow-500 border-yellow-500' 
+                                            : 'bg-black/40 border-gray-400 group-hover:border-white'
+                                        }
+                                    `}>
+                                        {item.isFeatured && <FiCheck size={14} className="text-black stroke-[3]" />}
                                     </div>
-                                    {/* DELETE BUTTON REMOVED to prevent accidents */}
+                                    <span className={`text-xs font-bold drop-shadow-md ${item.isFeatured ? 'text-yellow-500' : 'text-gray-300'}`}>
+                                        {item.isFeatured ? 'Featured' : 'Set Main'}
+                                    </span>
                                 </div>
-                             );
-                        })}
+
+                                {/* Remove Button (Only for NEW images) */}
+                                {item.type === 'new' && (
+                                    <button 
+                                        type="button" 
+                                        onClick={(e) => handleRemoveNewImage(e, item.idOrIndex)} 
+                                        className="p-1.5 bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white rounded-lg transition-colors backdrop-blur-sm"
+                                        title="Remove upload"
+                                    >
+                                        <FiMinus size={14} />
+                                    </button>
+                                )}
+                            </div>
+                            
+                            {/* Badge for New Items */}
+                            {item.type === 'new' && (
+                                <div className="absolute top-2 right-2 bg-green-500 text-black text-[10px] font-bold px-2 py-0.5 rounded shadow-lg">
+                                    NEW
+                                </div>
+                            )}
+                        </div>
+                    ))
+                ) : (
+                    <div className="col-span-2 text-center py-10 border-2 border-dashed border-gray-800 rounded-xl text-gray-600">
+                        <p className="text-sm">No images available</p>
                     </div>
                 )}
             </div>
