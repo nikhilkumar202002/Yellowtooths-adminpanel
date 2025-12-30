@@ -1,6 +1,5 @@
 import api from "./axios";
 
-
 export interface PaginationLink {
   url: string | null;
   label: string;
@@ -30,6 +29,7 @@ export interface PosterImage {
   position: string;
 }
 
+// --- UPDATED INTERFACE ---
 export interface FilmPoster {
   id: number;
   film_name: string;
@@ -42,6 +42,9 @@ export interface FilmPoster {
   description: string;
   status: string;
   images: PosterImage[];
+  // Added optional fields to fix TS errors
+  position_number?: string | number; 
+  type?: string; 
 }
 
 export interface PosterDesignListItem {
@@ -69,11 +72,10 @@ export const getAllPosters = async (
   try {
     const token = localStorage.getItem('token');
     
-    // Build Query Parameters
     const params = new URLSearchParams();
     params.append('page', page.toString());
-    if (search) params.append('search', search); // Sending search to backend
-    if (year && year !== 'All') params.append('year', year); // Sending year to backend
+    if (search) params.append('search', search); 
+    if (year && year !== 'All') params.append('year', year); 
 
     const response = await api.get(`/film-poster-designs?${params.toString()}`, {
       headers: {
@@ -97,7 +99,6 @@ export const getPosterDesignList = async (): Promise<PosterDesignListItem[]> => 
   return response.data;
 };
 
-// Poster single view
 export const getPosterById = async (id: string | number): Promise<FilmPoster> => {
   try {
     const response = await api.get(`/film-poster-designs/${id}`);
@@ -107,7 +108,6 @@ export const getPosterById = async (id: string | number): Promise<FilmPoster> =>
   }
 };
 
-// Service function to create a new poster
 export const createPoster = async (posterData: FormData): Promise<any> => {
   try {
     const token = localStorage.getItem('token'); 
@@ -124,10 +124,7 @@ export const createPoster = async (posterData: FormData): Promise<any> => {
   }
 };
 
-// --- Reorder Service ---
-
 export const updatePosterOrder = async (updatedPosters: PosterDesignListItem[]) => {
-
   const token = localStorage.getItem('token'); 
   const positionArray = updatedPosters.map((item, index) => ({
     id: item.id,
@@ -147,9 +144,7 @@ export const updatePosterOrder = async (updatedPosters: PosterDesignListItem[]) 
   return response.data;
 };
 
-// --- Search Service ---
 export const searchPosters = async (filmName: string) => {
-
   const token = localStorage.getItem('token');
   const response = await api.get('/film-poster-designs/search', {
     params: { film_name: filmName },
@@ -159,8 +154,6 @@ export const searchPosters = async (filmName: string) => {
   return response.data;
 };
 
-
-// 4. Delete Poster 
 export const deletePoster = async (id: number | string): Promise<any> => {
   try {
     const token = localStorage.getItem('token');
@@ -175,32 +168,25 @@ export const deletePoster = async (id: number | string): Promise<any> => {
   }
 };
 
-// Bulk Delete Poster Image
 export const deleteBulkPosterImages = async (ids: (string | number)[]): Promise<any> => {
   try {
     const token = localStorage.getItem('token');
-    
-    // Endpoint: DELETE /film-poster-designs/images/bulk-delete
     const response = await api.delete('/film-poster-designs/images/bulk-delete', {
       headers: { 
         "Authorization": `Bearer ${token}`,
         "Content-Type": "application/json" 
       },
-      // CHANGED: Key is now 'image_ids' to match backend validation
       data: { image_ids: ids } 
     });
-    
     return response.data;
   } catch (error) {
     throw error;
   }
 };
 
-// 4. Update (POST + _method: PUT)
 export const updatePoster = async (id: string | number, posterData: FormData): Promise<any> => {
   try {
     const token = localStorage.getItem('token');
-    // Ensure _method is set to PUT so backend treats it as an update
     posterData.append('_method', 'PUT'); 
 
     const response = await api.post(`/film-poster-designs/${id}`, posterData, {
@@ -222,17 +208,21 @@ export const updatePosterStatus = async (poster: FilmPoster, newStatus: string):
     formData.append('_method', 'PATCH');
     formData.append('status', newStatus);
     
-    // Required fields by backend validation
     formData.append('film_name', poster.film_name);
     formData.append('year', poster.year);
     formData.append('language', poster.language);
     formData.append('genre', poster.genre);
     formData.append('imdb_rating', poster.imdb_rating);
-    formData.append('type', (poster as any).type || 'Movie'); 
+    // No more need for 'as any' since we added type? to interface
+    formData.append('type', poster.type || 'Movie'); 
 
     if (poster.description) formData.append('description', poster.description);
     if (poster.trailer_link) formData.append('trailer_link', poster.trailer_link);
-    if (poster.position_number) formData.append('position_number', poster.position_number);
+    
+    // FIX: Convert to string to satisfy formData.append types if it is a number
+    if (poster.position_number) {
+        formData.append('position_number', poster.position_number.toString());
+    }
 
     const response = await api.post(`/film-poster-designs/${poster.id}`, formData, {
       headers: { "Authorization": `Bearer ${token}` }
@@ -243,15 +233,12 @@ export const updatePosterStatus = async (poster: FilmPoster, newStatus: string):
   }
 };
 
-// Employee Apis
 export const getAllEmployees = async (
   page: number = 1, 
   search: string = ''
 ): Promise<PaginatedResponse<Employee>> => {
   try {
     const token = localStorage.getItem('token');
-    
-    // Build query params
     const params = new URLSearchParams();
     params.append('page', page.toString());
     if (search) params.append('search', search);
@@ -261,14 +248,12 @@ export const getAllEmployees = async (
         "Authorization": `Bearer ${token}`
       }
     });
-    
     return response.data; 
   } catch (error) {
     throw error;
   }
 };
 
-// 2. Create Employee (NEW)
 export const createEmployee = async (employeeData: FormData): Promise<any> => {
   try {
     const token = localStorage.getItem('token');
@@ -284,11 +269,9 @@ export const createEmployee = async (employeeData: FormData): Promise<any> => {
   }
 };
 
-// 3. Delete Employee (NEW)
 export const deleteEmployee = async (id: number | string): Promise<any> => {
   try {
     const token = localStorage.getItem('token');
-    // Endpoint: DELETE /employee-photos/{id}
     const response = await api.delete(`/employee-photos/${id}`, {
       headers: { "Authorization": `Bearer ${token}` }
     });

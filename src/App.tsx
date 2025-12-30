@@ -1,25 +1,28 @@
-
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Login from './features/auth/Login';
 import { GlobalToaster } from './utils/Toast';
 import SuperAdmin from './features/dashboards/SuperAdmin';
-import Layout from './components/Layout'; // Import the layout
+import Layout from './components/Layout'; 
 import PosterList from './features/film poster/PosterList';
 import PosterSingle from './features/film poster/PosterSingle';
 import PosterCreate from './features/film poster/PosterCreate';
 import PosterEdit from './features/film poster/PosterEdit';
 import PosterRearrangeList from './features/film poster/PosterRearrangeList';
-
 import EmployeeList from './features/emlpoyee/EmployeeList';
 import EmployeeCreate from './features/emlpoyee/EmployeeCreate';
+import AutoLogoutHandler from './components/common/AutoLogoutHandler'; 
 
 const App = () => {
   return (
     <BrowserRouter>
-    <GlobalToaster />
+      {/* 2. Add it here so it watches user activity across the entire app */}
+      <AutoLogoutHandler />
+      
+      <GlobalToaster />
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/login" element={<Login />} />
+        
         <Route element={<Layout />}>
           <Route path="/Dashboard" element={<SuperAdmin />} />
           <Route path="/Allposters" element={<PosterList />} />
@@ -30,7 +33,6 @@ const App = () => {
 
           <Route path="/AllEmployees" element={<EmployeeList />} />
           <Route path="/Employee/create" element={<EmployeeCreate />} />
-
         </Route>
       </Routes>
     </BrowserRouter>

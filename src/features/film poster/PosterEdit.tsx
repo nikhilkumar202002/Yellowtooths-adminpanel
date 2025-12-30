@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'; // Changed useLocation to useSearchParams
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { getPosterById, updatePoster, deleteBulkPosterImages, type FilmPoster } from '../../services/AllServices';
+// REMOVED FiMinus from here
 import { 
-  FiArrowLeft, FiSave, FiPlus, FiMinus, FiCheck, FiImage, FiLoader, FiTrash2 
+  FiArrowLeft, FiSave, FiPlus, FiCheck, FiImage, FiLoader, FiTrash2 
 } from 'react-icons/fi';
 import { showSuccess, showError, showLoading, dismissToast } from '../../utils/Toast';
 
@@ -318,6 +319,7 @@ const PosterEdit = () => {
                                 className={`w-full h-auto block bg-gray-900 ${!item.isFeatured ? 'opacity-80 group-hover:opacity-100' : ''}`} 
                             />
 
+                            {/* Top Right: Delete Button (Instant Action) */}
                             <button 
                                 type="button" 
                                 onClick={(e) => handleDeleteImage(e, item.type, item.idOrIndex)}
@@ -327,6 +329,7 @@ const PosterEdit = () => {
                                 <FiTrash2 size={12} />
                             </button>
 
+                            {/* Bottom: Checkbox */}
                             <div className={`
                                 absolute bottom-0 left-0 right-0 p-3 
                                 flex items-center justify-between

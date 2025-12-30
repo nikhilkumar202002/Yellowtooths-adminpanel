@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { getPosterDesignList, updatePosterOrder, type PosterDesignListItem } from '../../services/AllServices';
-import { LuLoader, LuGripHorizontal, LuClapperboard, LuSave } from "react-icons/lu";
+import { LuLoader, LuGripHorizontal, LuClapperboard } from "react-icons/lu";
 import { showSuccess, showError, showLoading, dismissToast } from '../../utils/Toast'; // Assuming you have these utils
 
 const PosterRearrangeList = () => {
