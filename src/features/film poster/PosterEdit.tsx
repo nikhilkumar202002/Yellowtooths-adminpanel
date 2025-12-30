@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-// Updated import to use deleteBulkPosterImages
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'; // Changed useLocation to useSearchParams
 import { getPosterById, updatePoster, deleteBulkPosterImages, type FilmPoster } from '../../services/AllServices';
 import { 
   FiArrowLeft, FiSave, FiPlus, FiMinus, FiCheck, FiImage, FiLoader, FiTrash2 
@@ -10,9 +9,12 @@ import { showSuccess, showError, showLoading, dismissToast } from '../../utils/T
 const PosterEdit = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // 1. Get the returnPage from the URL query params
+  const [searchParams] = useSearchParams();
+  const returnPage = searchParams.get('returnPage') || '1';
 
-  // Loading States
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [fetching, setFetching] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
@@ -26,19 +28,15 @@ const PosterEdit = () => {
     trailer_link: '',
     description: '',
     status: '1',
-    position_number: '',
     type: 'Movie',
   });
 
-  // --- Image Logic ---
+  // Image Logic State
   const [existingImages, setExistingImages] = useState<any[]>([]);
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [newPreviews, setNewPreviews] = useState<string[]>([]);
-  
-  // Unified State for Main Image Selection
   const [activeMainImage, setActiveMainImage] = useState<{ type: 'existing' | 'new', idOrIndex: number } | null>(null);
 
-  // Fetch Data
   useEffect(() => {
     if (id) fetchInitialData(id);
   }, [id]);
@@ -46,7 +44,6 @@ const PosterEdit = () => {
   const fetchInitialData = async (posterId: string) => {
     try {
       const data: FilmPoster = await getPosterById(posterId);
-      
       setFormData({
         film_name: data.film_name || '',
         year: data.year || '',
@@ -56,14 +53,11 @@ const PosterEdit = () => {
         trailer_link: data.trailer_link || '',
         description: data.description || '',
         status: data.status || '1',
-        position_number: (data as any).position_number || '', 
         type: (data as any).type || 'Movie',
       });
 
       if (data.images && data.images.length > 0) {
         setExistingImages(data.images);
-        
-        // Auto-detect current main image
         const mainImgMatch = data.images.find(img => img.file_path === data.main_image);
         if (mainImgMatch) {
             setActiveMainImage({ type: 'existing', idOrIndex: mainImgMatch.id });
@@ -81,11 +75,10 @@ const PosterEdit = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // --- New Image Handlers ---
   const handleAddImage = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const files = Array.from(e.target.files);
-      const validFiles = files.filter(file => file.size <= 2 * 1024 * 1024); // 2MB Limit
+      const validFiles = files.filter(file => file.size <= 2 * 1024 * 1024); 
       const previews = validFiles.map(file => URL.createObjectURL(file));
 
       setNewFiles(prev => [...prev, ...validFiles]);
@@ -94,26 +87,22 @@ const PosterEdit = () => {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  // Logic to Set Main Image
   const handleSetFeatured = (type: 'existing' | 'new', idOrIndex: number) => {
     if (activeMainImage?.type === type && activeMainImage.idOrIndex === idOrIndex) {
-        // Optional: Toggle off logic
+       // optional toggle off logic
     } else {
         setActiveMainImage({ type, idOrIndex });
     }
   };
 
-  // --- DELETE LOGIC (Updated to use Bulk Endpoint for Single Item) ---
   const handleDeleteImage = async (e: React.MouseEvent, type: 'existing' | 'new', idOrIndex: number) => {
-    e.stopPropagation(); // Prevent clicking the card
+    e.stopPropagation();
 
     if (type === 'new') {
-        // Handle Local Delete (New Uploads)
         URL.revokeObjectURL(newPreviews[idOrIndex]);
         setNewFiles(prev => prev.filter((_, i) => i !== idOrIndex));
         setNewPreviews(prev => prev.filter((_, i) => i !== idOrIndex));
         
-        // Adjust main image selection
         if (activeMainImage?.type === 'new' && activeMainImage.idOrIndex === idOrIndex) {
             setActiveMainImage(null);
         } else if (activeMainImage?.type === 'new' && activeMainImage.idOrIndex > idOrIndex) {
@@ -121,22 +110,16 @@ const PosterEdit = () => {
         }
     } 
     else {
-        // Handle API Delete (Existing Images)
         if (!window.confirm("Are you sure you want to delete this image?")) return;
 
         const toastId = showLoading("Deleting image...");
         try {
-            // UPDATED: Call bulk delete API with a single ID in array
             await deleteBulkPosterImages([idOrIndex]); 
-
-            // Instant UI Refresh
             setExistingImages(prev => prev.filter(img => img.id !== idOrIndex));
 
-            // Adjust main image selection
             if (activeMainImage?.type === 'existing' && activeMainImage.idOrIndex === idOrIndex) {
                 setActiveMainImage(null);
             }
-
             dismissToast(toastId);
             showSuccess("Image deleted successfully");
         } catch (err) {
@@ -147,7 +130,6 @@ const PosterEdit = () => {
     }
   };
 
-  // --- Combine Images for Masonry Display ---
   const allMediaItems = useMemo(() => {
     const newItems = newPreviews.map((src, index) => ({
         type: 'new' as const,
@@ -166,8 +148,6 @@ const PosterEdit = () => {
     return [...newItems, ...existingItems];
   }, [newPreviews, existingImages, activeMainImage]);
 
-
-  // --- Submit Logic ---
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!id) return;
@@ -204,7 +184,9 @@ const PosterEdit = () => {
       await updatePoster(id, data);
       dismissToast(toastId);
       showSuccess("Poster updated successfully!");
-      navigate('/Allposters');
+      
+      // 2. Redirect back to the correct page using the captured returnPage
+      navigate(`/Allposters?page=${returnPage}`);
 
     } catch (err: any) {
       console.error(err);
@@ -218,6 +200,11 @@ const PosterEdit = () => {
     }
   };
 
+  // 3. Helper for Back Button
+  const handleBack = () => {
+    navigate(`/Allposters?page=${returnPage}`);
+  };
+
   if (fetching) return <div className="flex justify-center items-center h-96 text-yellow-500 animate-pulse">Loading Data...</div>;
 
   return (
@@ -226,7 +213,11 @@ const PosterEdit = () => {
       {/* Header */}
       <div className="flex items-center justify-between border-b border-gray-800 pb-5">
         <div className="flex items-center gap-4">
-          <button onClick={() => navigate(-1)} className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white">
+          <button 
+            type="button"
+            onClick={handleBack} 
+            className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white"
+          >
             <FiArrowLeft size={20} />
           </button>
           <h1 className="text-2xl font-bold text-white">Edit Poster</h1>
@@ -284,10 +275,6 @@ const PosterEdit = () => {
                     <label className="text-sm text-gray-400">IMDb Rating</label>
                     <input name="imdb_rating" value={formData.imdb_rating} onChange={handleChange} className="w-full bg-[#121212] border border-gray-700 rounded-lg p-3 text-white outline-none" />
                  </div>
-                 <div className="space-y-2">
-                    <label className="text-sm text-gray-400">Position</label>
-                    <input name="position_number" type="number" value={formData.position_number} onChange={handleChange} className="w-full bg-[#121212] border border-gray-700 rounded-lg p-3 text-white outline-none" />
-                 </div>
              </div>
              <div className="mt-6 space-y-2">
                 <label className="text-sm text-gray-400">Trailer Link</label>
@@ -331,7 +318,6 @@ const PosterEdit = () => {
                                 className={`w-full h-auto block bg-gray-900 ${!item.isFeatured ? 'opacity-80 group-hover:opacity-100' : ''}`} 
                             />
 
-                            {/* Top Right: Delete Button (Instant Action) */}
                             <button 
                                 type="button" 
                                 onClick={(e) => handleDeleteImage(e, item.type, item.idOrIndex)}
@@ -341,7 +327,6 @@ const PosterEdit = () => {
                                 <FiTrash2 size={12} />
                             </button>
 
-                            {/* Bottom: Checkbox */}
                             <div className={`
                                 absolute bottom-0 left-0 right-0 p-3 
                                 flex items-center justify-between
@@ -363,7 +348,6 @@ const PosterEdit = () => {
                                 </div>
                             </div>
                             
-                            {/* New Badge */}
                             {item.type === 'new' && (
                                 <div className="absolute top-2 left-2 bg-green-500 text-black text-[10px] font-bold px-2 py-0.5 rounded shadow-lg pointer-events-none">
                                     NEW
