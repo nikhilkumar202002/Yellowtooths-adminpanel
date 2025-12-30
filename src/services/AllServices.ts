@@ -44,6 +44,12 @@ export interface FilmPoster {
   images: PosterImage[];
 }
 
+export interface PosterDesignListItem {
+  id: number;
+  film_name: string;
+  position_number: number; 
+}
+
 export interface Employee {
   id: number;
   name: string;
@@ -80,8 +86,18 @@ export const getAllPosters = async (
     throw error;
   }
 };
-// Poster single view
 
+export const getPosterDesignList = async (): Promise<PosterDesignListItem[]> => {
+  const token = localStorage.getItem('token'); 
+  const response = await api.get('/film-poster-designs/list', {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+  return response.data;
+};
+
+// Poster single view
 export const getPosterById = async (id: string | number): Promise<FilmPoster> => {
   try {
     const response = await api.get(`/film-poster-designs/${id}`);
@@ -106,6 +122,41 @@ export const createPoster = async (posterData: FormData): Promise<any> => {
   } catch (error) {
     throw error;
   }
+};
+
+// --- Reorder Service ---
+
+export const updatePosterOrder = async (updatedPosters: PosterDesignListItem[]) => {
+
+  const token = localStorage.getItem('token'); 
+  const positionArray = updatedPosters.map((item, index) => ({
+    id: item.id,
+    position_number: index + 1
+  }));
+
+  const payload = {
+    positions: positionArray
+  };
+
+  const response = await api.put('/film-poster-designs/reorder', payload, {
+    headers: {
+      Authorization: `Bearer ${token}` 
+    }
+  });
+
+  return response.data;
+};
+
+// --- Search Service ---
+export const searchPosters = async (filmName: string) => {
+
+  const token = localStorage.getItem('token');
+  const response = await api.get('/film-poster-designs/search', {
+    params: { film_name: filmName },
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  return response.data;
 };
 
 
@@ -162,6 +213,35 @@ export const updatePoster = async (id: string | number, posterData: FormData): P
   } catch (error) { throw error; }
 };
 
+// 8. Update Poster Status (Toggle)
+export const updatePosterStatus = async (poster: FilmPoster, newStatus: string): Promise<any> => {
+  try {
+    const token = localStorage.getItem('token');
+    
+    const formData = new FormData();
+    formData.append('_method', 'PATCH');
+    formData.append('status', newStatus);
+    
+    // Required fields by backend validation
+    formData.append('film_name', poster.film_name);
+    formData.append('year', poster.year);
+    formData.append('language', poster.language);
+    formData.append('genre', poster.genre);
+    formData.append('imdb_rating', poster.imdb_rating);
+    formData.append('type', (poster as any).type || 'Movie'); 
+
+    if (poster.description) formData.append('description', poster.description);
+    if (poster.trailer_link) formData.append('trailer_link', poster.trailer_link);
+    if (poster.position_number) formData.append('position_number', poster.position_number);
+
+    const response = await api.post(`/film-poster-designs/${poster.id}`, formData, {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
 
 // Employee Apis
 export const getAllEmployees = async (
