@@ -91,8 +91,6 @@ export const getPosterById = async (id: string | number): Promise<FilmPoster> =>
   }
 };
 
-// create poster
-
 // Service function to create a new poster
 export const createPoster = async (posterData: FormData): Promise<any> => {
   try {
@@ -120,6 +118,27 @@ export const deletePoster = async (id: number | string): Promise<any> => {
         "Authorization": `Bearer ${token}`
       }
     });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Bulk Delete Poster Image
+export const deleteBulkPosterImages = async (ids: (string | number)[]): Promise<any> => {
+  try {
+    const token = localStorage.getItem('token');
+    
+    // Endpoint: DELETE /film-poster-designs/images/bulk-delete
+    const response = await api.delete('/film-poster-designs/images/bulk-delete', {
+      headers: { 
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json" 
+      },
+      // CHANGED: Key is now 'image_ids' to match backend validation
+      data: { image_ids: ids } 
+    });
+    
     return response.data;
   } catch (error) {
     throw error;
@@ -184,7 +203,6 @@ export const createEmployee = async (employeeData: FormData): Promise<any> => {
     throw error;
   }
 };
-
 
 // 3. Delete Employee (NEW)
 export const deleteEmployee = async (id: number | string): Promise<any> => {

@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-// 1. Added 'type' keyword for FilmPoster
-import { getPosterById, updatePoster, type FilmPoster } from '../../services/AllServices';
+// Updated import to use deleteBulkPosterImages
+import { getPosterById, updatePoster, deleteBulkPosterImages, type FilmPoster } from '../../services/AllServices';
 import { 
-  FiArrowLeft, FiSave, FiPlus, FiMinus, FiCheck, FiImage, FiLoader 
+  FiArrowLeft, FiSave, FiPlus, FiMinus, FiCheck, FiImage, FiLoader, FiTrash2 
 } from 'react-icons/fi';
 import { showSuccess, showError, showLoading, dismissToast } from '../../utils/Toast';
 
@@ -94,25 +94,56 @@ const PosterEdit = () => {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const handleRemoveNewImage = (e: React.MouseEvent, index: number) => {
-    e.stopPropagation();
-    URL.revokeObjectURL(newPreviews[index]);
-    setNewFiles(prev => prev.filter((_, i) => i !== index));
-    setNewPreviews(prev => prev.filter((_, i) => i !== index));
-    
-    if (activeMainImage?.type === 'new' && activeMainImage.idOrIndex === index) {
-        setActiveMainImage(null);
-    } 
-    else if (activeMainImage?.type === 'new' && activeMainImage.idOrIndex > index) {
-        setActiveMainImage({ ...activeMainImage, idOrIndex: activeMainImage.idOrIndex - 1 });
+  // Logic to Set Main Image
+  const handleSetFeatured = (type: 'existing' | 'new', idOrIndex: number) => {
+    if (activeMainImage?.type === type && activeMainImage.idOrIndex === idOrIndex) {
+        // Optional: Toggle off logic
+    } else {
+        setActiveMainImage({ type, idOrIndex });
     }
   };
 
-  const handleSetFeatured = (type: 'existing' | 'new', idOrIndex: number) => {
-    if (activeMainImage?.type === type && activeMainImage.idOrIndex === idOrIndex) {
-        // Optional: Toggle off
-    } else {
-        setActiveMainImage({ type, idOrIndex });
+  // --- DELETE LOGIC (Updated to use Bulk Endpoint for Single Item) ---
+  const handleDeleteImage = async (e: React.MouseEvent, type: 'existing' | 'new', idOrIndex: number) => {
+    e.stopPropagation(); // Prevent clicking the card
+
+    if (type === 'new') {
+        // Handle Local Delete (New Uploads)
+        URL.revokeObjectURL(newPreviews[idOrIndex]);
+        setNewFiles(prev => prev.filter((_, i) => i !== idOrIndex));
+        setNewPreviews(prev => prev.filter((_, i) => i !== idOrIndex));
+        
+        // Adjust main image selection
+        if (activeMainImage?.type === 'new' && activeMainImage.idOrIndex === idOrIndex) {
+            setActiveMainImage(null);
+        } else if (activeMainImage?.type === 'new' && activeMainImage.idOrIndex > idOrIndex) {
+            setActiveMainImage({ ...activeMainImage, idOrIndex: activeMainImage.idOrIndex - 1 });
+        }
+    } 
+    else {
+        // Handle API Delete (Existing Images)
+        if (!window.confirm("Are you sure you want to delete this image?")) return;
+
+        const toastId = showLoading("Deleting image...");
+        try {
+            // UPDATED: Call bulk delete API with a single ID in array
+            await deleteBulkPosterImages([idOrIndex]); 
+
+            // Instant UI Refresh
+            setExistingImages(prev => prev.filter(img => img.id !== idOrIndex));
+
+            // Adjust main image selection
+            if (activeMainImage?.type === 'existing' && activeMainImage.idOrIndex === idOrIndex) {
+                setActiveMainImage(null);
+            }
+
+            dismissToast(toastId);
+            showSuccess("Image deleted successfully");
+        } catch (err) {
+            console.error(err);
+            dismissToast(toastId);
+            showError("Failed to delete image.");
+        }
     }
   };
 
@@ -132,7 +163,6 @@ const PosterEdit = () => {
         isFeatured: activeMainImage?.type === 'existing' && activeMainImage.idOrIndex === img.id
     }));
 
-    // Combine them (New first, or however you prefer)
     return [...newItems, ...existingItems];
   }, [newPreviews, existingImages, activeMainImage]);
 
@@ -158,7 +188,6 @@ const PosterEdit = () => {
 
       if (activeMainImage) {
           if (activeMainImage.type === 'existing') {
-              // Find the INDEX of this image in the existingImages array
               const index = existingImages.findIndex(img => img.id === activeMainImage.idOrIndex);
               if (index !== -1) {
                 data.append('main_image_index', index.toString());
@@ -206,7 +235,7 @@ const PosterEdit = () => {
 
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
-        {/* LEFT COLUMN: Fields (8 Cols) */}
+        {/* LEFT COLUMN: Fields */}
         <div className="lg:col-span-8 space-y-6">
           <div className="bg-[#0b0b0b] border border-gray-800 rounded-xl p-6">
              <h3 className="text-lg font-semibold text-white mb-6 border-l-4 border-yellow-500 pl-3">Basic Information</h3>
@@ -267,11 +296,11 @@ const PosterEdit = () => {
           </div>
         </div>
 
-        {/* RIGHT COLUMN: Images (Masonry Layout) */}
+        {/* RIGHT COLUMN: Images */}
         <div className="lg:col-span-4 space-y-6">
           <div className="bg-[#0b0b0b] border border-gray-800 rounded-xl p-6 sticky top-6">
             
-            {/* Header / Add Button */}
+            {/* Header */}
             <div className="flex justify-between items-center mb-6">
                 <h3 className="text-lg font-semibold text-white flex items-center gap-2"><FiImage /> Gallery</h3>
                 <button type="button" onClick={() => fileInputRef.current?.click()} className="text-yellow-500 hover:bg-yellow-500/10 px-4 py-2 rounded-lg text-sm font-bold border border-yellow-500/30 flex items-center gap-2 transition-colors">
@@ -280,10 +309,9 @@ const PosterEdit = () => {
             </div>
             <input type="file" hidden multiple accept="image/*" ref={fileInputRef} onChange={handleAddImage} />
 
-            {/* --- MASONRY LAYOUT CONTAINER --- */}
+            {/* Images Grid */}
             <div className="columns-2 gap-4 space-y-4">
                 {allMediaItems.length > 0 ? (
-                    // 2. Removed unused 'index' param
                     allMediaItems.map((item) => (
                         <div 
                             key={`${item.type}-${item.idOrIndex}`}
@@ -297,20 +325,28 @@ const PosterEdit = () => {
                                 }
                             `}
                         >
-                            {/* Image with Variable Height */}
                             <img 
                                 src={item.src} 
                                 alt="Poster" 
                                 className={`w-full h-auto block bg-gray-900 ${!item.isFeatured ? 'opacity-80 group-hover:opacity-100' : ''}`} 
                             />
 
-                            {/* Overlay Controls (Checkbox) */}
+                            {/* Top Right: Delete Button (Instant Action) */}
+                            <button 
+                                type="button" 
+                                onClick={(e) => handleDeleteImage(e, item.type, item.idOrIndex)}
+                                className="absolute top-2 right-2 p-1.5 bg-red-600/90 text-white hover:bg-red-500 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all z-10 backdrop-blur-sm"
+                                title="Delete Image"
+                            >
+                                <FiTrash2 size={12} />
+                            </button>
+
+                            {/* Bottom: Checkbox */}
                             <div className={`
                                 absolute bottom-0 left-0 right-0 p-3 
                                 flex items-center justify-between
                                 bg-gradient-to-t from-black/90 via-black/60 to-transparent
                             `}>
-                                {/* Checkbox Logic */}
                                 <div className="flex items-center gap-2">
                                     <div className={`
                                         w-5 h-5 rounded border flex items-center justify-center transition-colors shadow-sm
@@ -325,23 +361,11 @@ const PosterEdit = () => {
                                         {item.isFeatured ? 'Featured' : 'Set Main'}
                                     </span>
                                 </div>
-
-                                {/* Remove Button (Only for NEW images) */}
-                                {item.type === 'new' && (
-                                    <button 
-                                        type="button" 
-                                        onClick={(e) => handleRemoveNewImage(e, item.idOrIndex)} 
-                                        className="p-1.5 bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white rounded-lg transition-colors backdrop-blur-sm"
-                                        title="Remove upload"
-                                    >
-                                        <FiMinus size={14} />
-                                    </button>
-                                )}
                             </div>
                             
-                            {/* Badge for New Items */}
+                            {/* New Badge */}
                             {item.type === 'new' && (
-                                <div className="absolute top-2 right-2 bg-green-500 text-black text-[10px] font-bold px-2 py-0.5 rounded shadow-lg">
+                                <div className="absolute top-2 left-2 bg-green-500 text-black text-[10px] font-bold px-2 py-0.5 rounded shadow-lg pointer-events-none">
                                     NEW
                                 </div>
                             )}
