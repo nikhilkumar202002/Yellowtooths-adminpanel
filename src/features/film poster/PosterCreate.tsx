@@ -13,14 +13,14 @@ const PosterCreate = () => {
   const [formData, setFormData] = useState({
     film_name: '',
     year: new Date().getFullYear().toString(),
-    language: '',
+    language: 'Malayalam',
     genre: '',
     imdb_rating: '',
     trailer_link: '',
-    description: '', // Added Description
-    status: '1',     // Default Active
-    position_number: '',
-    type: 'Movie',   // Default Movie
+    description: '',
+    status: '1',    
+    type: 'Movie',  
+    // position_number removed from state
   });
 
   // --- Image Logic State ---
@@ -31,12 +31,10 @@ const PosterCreate = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // 1. Add Image (Plus Icon Logic)
+  // 1. Add Image
   const handleAddImage = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const newFiles = Array.from(e.target.files);
-      
-      // Basic Validation: Check size < 2MB
       const validFiles = newFiles.filter(file => file.size <= 2 * 1024 * 1024);
       
       if (validFiles.length !== newFiles.length) {
@@ -48,16 +46,14 @@ const PosterCreate = () => {
       setImageFiles(prev => [...prev, ...validFiles]);
       setPreviews(prev => [...prev, ...newPreviews]);
       
-      // If this is the first image added, make it the main one automatically
       if (imageFiles.length === 0 && validFiles.length > 0) {
         setMainImageIndex(0);
       }
     }
-    // Reset input
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  // 2. Remove Image (Minus Icon Logic)
+  // 2. Remove Image
   const handleRemoveImage = (indexToRemove: number) => {
     URL.revokeObjectURL(previews[indexToRemove]);
 
@@ -67,20 +63,18 @@ const PosterCreate = () => {
     setImageFiles(newFiles);
     setPreviews(newPreviews);
 
-    // Adjust Main Image Index if needed
     if (indexToRemove === mainImageIndex) {
-      setMainImageIndex(0); // Reset to first available
+      setMainImageIndex(0);
     } else if (indexToRemove < mainImageIndex) {
-      setMainImageIndex(prev => prev - 1); // Shift index down
+      setMainImageIndex(prev => prev - 1);
     }
   };
 
-  // 3. Checkbox Logic (Set Featured)
+  // 3. Set Featured
   const handleSetFeatured = (index: number) => {
     setMainImageIndex(index);
   };
 
-  // Handle Text Changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -93,8 +87,6 @@ const handleSubmit = async (e: React.FormEvent) => {
     try {
       const data = new FormData();
       
-      console.log("--- SUBMITTING DATA ---");
-
       // 1. Append Text Fields
       data.append('film_name', formData.film_name);
       data.append('year', formData.year);
@@ -102,27 +94,22 @@ const handleSubmit = async (e: React.FormEvent) => {
       data.append('genre', formData.genre);
       data.append('type', formData.type);
       data.append('status', formData.status);
-      
-      // 2. Append Main Image Index (as per docs)
       data.append('main_image_index', mainImageIndex.toString());
 
-      // 3. FIX: Append the actual Main Image File (to satisfy "main image required" error)
+      // 2. Fix: Append Main Image File
       if (imageFiles[mainImageIndex]) {
         data.append('main_image', imageFiles[mainImageIndex]);
       }
 
-      // 4. Append Optional Fields (Only if valid)
+      // 3. Optional Fields
       if (formData.description?.trim()) data.append('description', formData.description);
       if (formData.trailer_link?.trim()) data.append('trailer_link', formData.trailer_link);
       
       if (formData.imdb_rating && !isNaN(Number(formData.imdb_rating))) {
           data.append('imdb_rating', formData.imdb_rating);
       }
-      if (formData.position_number && !isNaN(Number(formData.position_number))) {
-          data.append('position_number', formData.position_number);
-      }
 
-      // 5. Append All Gallery Images
+      // 4. Append All Images
       if (imageFiles.length === 0) {
         throw new Error("Please select at least one image.");
       }
@@ -131,30 +118,24 @@ const handleSubmit = async (e: React.FormEvent) => {
         data.append('images[]', file);
       });
 
-      // API Call
       await createPoster(data);
       navigate('/Allposters');
       
     } catch (err: any) {
       console.error("Upload Failed:", err);
-
-      // Error Handling
       if (err.response && err.response.data) {
           const serverData = err.response.data;
           let displayMsg = "Validation Failed.";
-
           if (serverData.errors) {
-              // Laravel style errors
               displayMsg = Object.values(serverData.errors).flat().join(', ');
           } else if (serverData.message) {
               displayMsg = serverData.message;
           }
-          
           setError(`Server Error: ${displayMsg}`);
       } else if (err.message) {
           setError(err.message);
       } else {
-          setError("An unexpected error occurred. Check console.");
+          setError("An unexpected error occurred.");
       }
       setLoading(false);
     }
@@ -225,6 +206,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                     <input 
                         name="language" 
                         required 
+                        value={formData.language} // Corrected binding
                         className="w-full bg-[#121212] border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-yellow-500 outline-none transition-all" 
                         placeholder="e.g. English, Malayalam"
                         onChange={handleChange}
@@ -298,16 +280,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                         <option value="0">Inactive</option>
                     </select>
                  </div>
-                 <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-400">Position Number</label>
-                    <input 
-                        name="position_number" 
-                        type="number" 
-                        className="w-full bg-[#121212] border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-yellow-500 outline-none transition-all" 
-                        placeholder="Order (must be unique)"
-                        onChange={handleChange}
-                    />
-                 </div>
+                 {/* Position Number Field Removed Here */}
              </div>
 
              <div className="mt-6 space-y-2">
@@ -331,7 +304,6 @@ const handleSubmit = async (e: React.FormEvent) => {
                     <FiImage /> Images <span className="text-red-500">*</span>
                 </h3>
                 
-                {/* GLOBAL PLUS ICON: Add Image */}
                 <button 
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
@@ -342,7 +314,6 @@ const handleSubmit = async (e: React.FormEvent) => {
                 </button>
             </div>
 
-            {/* Hidden Input */}
             <input 
                 type="file" 
                 hidden 
@@ -352,7 +323,6 @@ const handleSubmit = async (e: React.FormEvent) => {
                 onChange={handleAddImage}
             />
 
-            {/* Empty State */}
             {previews.length === 0 && (
                 <div 
                     onClick={() => fileInputRef.current?.click()}
@@ -366,7 +336,6 @@ const handleSubmit = async (e: React.FormEvent) => {
                 </div>
             )}
 
-            {/* Image List */}
             <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1 custom-scrollbar">
                 {previews.map((src, index) => (
                     <div 
@@ -377,7 +346,6 @@ const handleSubmit = async (e: React.FormEvent) => {
                             : 'border-gray-800 bg-[#121212]'
                         }`}
                     >
-                        {/* Preview Thumbnail */}
                         <div className="h-20 w-14 flex-shrink-0 bg-black rounded overflow-hidden border border-gray-700">
                             <img src={src} alt="Upload" className="h-full w-full object-cover" />
                         </div>
@@ -385,8 +353,6 @@ const handleSubmit = async (e: React.FormEvent) => {
                         <div className="flex-1 flex flex-col justify-between py-0.5">
                             <div className="flex justify-between items-start">
                                 <span className="text-xs font-mono text-gray-500 uppercase">Index: {index}</span>
-                                
-                                {/* Minus Icon (Remove) */}
                                 <button
                                     type="button"
                                     onClick={() => handleRemoveImage(index)}
@@ -397,7 +363,6 @@ const handleSubmit = async (e: React.FormEvent) => {
                                 </button>
                             </div>
                             
-                            {/* Checkbox Logic (Featured) */}
                             <label className="flex items-center gap-2 cursor-pointer group select-none mt-2">
                                 <div className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${
                                     mainImageIndex === index 
@@ -421,7 +386,6 @@ const handleSubmit = async (e: React.FormEvent) => {
                 ))}
             </div>
 
-            {/* Submit Button */}
             <div className="pt-6 mt-2 border-t border-gray-800">
                 <button 
                   type="submit"
