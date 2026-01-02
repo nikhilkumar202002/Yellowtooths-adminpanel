@@ -5,18 +5,19 @@ import {
   type Client, 
   type PaginatedResponse 
 } from '../../services/AllServices';
-import { showSuccess, showError, showLoading, dismissToast } from '../../utils/Toast';
-import { LuSearch, LuPlus, LuPen, LuTrash2, LuLoader } from "react-icons/lu";
+// import { deleteClient } from '../../services/AllServices'; // Uncomment if using delete
+// import { showSuccess, showError, showLoading, dismissToast } from '../../utils/Toast';
+import { LuSearch, LuPlus, LuPen, LuLoader } from "react-icons/lu";
 
-// Import the new Modal Component
+// Import the Modal
 import ClientCreate from './ClientCreate';
 
 const ClientsList = () => {
   const [pagination, setPagination] = useState<PaginatedResponse<Client> | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState<string>(''); // eslint-disable-line @typescript-eslint/no-unused-vars
   
-  // --- Modal State ---
+  // Modal State
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   // URL Params
@@ -28,8 +29,15 @@ const ClientsList = () => {
   const prevSearchTerm = useRef(searchTerm);
 
   // --- Fetch Data ---
+  // FIX: Removed 'pagination' from dependencies to prevent infinite re-render loop
   const fetchClients = useCallback(async (page: number) => {
-    if (!pagination) setLoading(true);
+    // Only set loading true if we don't have data yet (initial load)
+    // We check the state setter to avoid dependency on 'pagination' variable
+    setPagination(prev => {
+        if (!prev) setLoading(true);
+        return prev;
+    });
+
     try {
       const response = await getAllClients(page, searchTerm);
       let data: PaginatedResponse<Client>;
@@ -54,15 +62,19 @@ const ClientsList = () => {
         data = response;
       }
       setPagination(data);
-      setLoading(false);
     } catch (err) {
       console.error("Failed to fetch clients:", err);
-      if (!pagination) setError('Failed to load client list.');
-      setLoading(false);
+      // Only set error if we have no data
+      setPagination(prev => {
+          if (!prev) setError('Failed to load client list.');
+          return prev;
+      });
+    } finally {
+        setLoading(false);
     }
-  }, [pagination, searchTerm]);
+  }, [searchTerm]); // Only recreate if searchTerm changes
 
-  // --- Effects ---
+  // --- Effect 1: Handle Search Debounce ---
   useEffect(() => {
     if (isFirstRender.current) {
         isFirstRender.current = false;
@@ -83,31 +95,12 @@ const ClientsList = () => {
     return () => clearTimeout(timer);
   }, [searchTerm, currentPage, setSearchParams, fetchClients]);
 
+  // --- Effect 2: Handle URL Page Change ---
   useEffect(() => {
     fetchClients(currentPage);
   }, [currentPage, fetchClients]);
 
-  // // --- Handlers ---
-  // const handleDelete = async (id: number) => {
-  //   if (window.confirm("Are you sure you want to delete this client?")) {
-  //     const toastId = showLoading("Deleting client...");
-  //     try {
-  //       await deleteClient(id);
-  //       dismissToast(toastId);
-  //       showSuccess("Client deleted successfully");
-  //       if (pagination?.data.length === 1 && currentPage > 1) {
-  //           setSearchParams({ page: (currentPage - 1).toString() });
-  //       } else {
-  //           fetchClients(currentPage);
-  //       }
-  //     } catch (err) {
-  //       dismissToast(toastId);
-  //       console.error("Delete failed:", err);
-  //       showError("Failed to delete client.");
-  //     }
-  //   }
-  // };
-
+  // --- Handlers ---
   const handlePageChange = (url: string | null) => {
     if (!url) return;
     try {
@@ -137,7 +130,6 @@ const ClientsList = () => {
                 value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
         </div>
 
-        {/* Change Link to Button to open Modal */}
         <button 
             onClick={() => setShowCreateModal(true)} 
             className="flex items-center gap-2 bg-yellow-500 hover:bg-yellow-400 text-black px-5 py-2.5 rounded-lg font-semibold text-sm transition-all shadow-lg shadow-yellow-500/20 whitespace-nowrap"
@@ -177,7 +169,6 @@ const ClientsList = () => {
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-3">
                             <button className="text-gray-400 hover:text-white" title="Edit"><LuPen size={18} /></button>
-                            {/* <button onClick={() => handleDelete(client.id)} className="text-gray-400 hover:text-red-500" title="Delete"><LuTrash2 size={18} /></button> */}
                         </div>
                       </td>
                     </tr>
