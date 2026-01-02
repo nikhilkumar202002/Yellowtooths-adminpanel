@@ -331,3 +331,51 @@ export const createClient = async (clientData: FormData): Promise<any> => {
     throw error;
   }
 };
+
+export const deleteClient = async (id: number | string): Promise<any> => {
+  try {
+    const token = localStorage.getItem('token');
+    
+    // Endpoint: DELETE /clients/{id}
+    const response = await api.delete(`/clients/${id}`, {
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// 4. Get Client by ID (View Single Details)
+export const getClientById = async (id: number | string): Promise<Client> => {
+  try {
+    const token = localStorage.getItem('token');
+    // Endpoint: GET /clients/{id}
+    const response = await api.get(`/clients/${id}`, {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// 5. Update Client (NEW)
+export const updateClient = async (id: number | string, clientData: FormData): Promise<any> => {
+  try {
+    const token = localStorage.getItem('token');
+    // Spoof PUT method for FormData/File upload support
+    clientData.append('_method', 'PUT'); 
+
+    // Endpoint: POST /clients/{id}
+    const response = await api.post(`/clients/${id}`, clientData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        "Authorization": `Bearer ${token}`
+      },
+    });
+    return response.data;
+  } catch (error) { throw error; }
+};

@@ -2,23 +2,27 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { 
   getAllClients, 
+  deleteClient, 
   type Client, 
   type PaginatedResponse 
 } from '../../services/AllServices';
-// import { deleteClient } from '../../services/AllServices'; // Uncomment if using delete
-// import { showSuccess, showError, showLoading, dismissToast } from '../../utils/Toast';
-import { LuSearch, LuPlus, LuPen, LuLoader } from "react-icons/lu";
+import { showSuccess, showError, showLoading, dismissToast } from '../../utils/Toast';
+import { LuSearch, LuPlus, LuPen, LuLoader, LuTrash2, LuEye } from "react-icons/lu"; // Added LuEye
 
-// Import the Modal
+// Import Modals
 import ClientCreate from './ClientCreate';
+import ClientSingle from './ClientSingle'; // Imported
+import ClientEdit from './ClientEdit';     // Imported
 
 const ClientsList = () => {
   const [pagination, setPagination] = useState<PaginatedResponse<Client> | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string>(''); // eslint-disable-line @typescript-eslint/no-unused-vars
+  const [error, setError] = useState<string>('');
   
-  // Modal State
+  // --- Modal States ---
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [viewId, setViewId] = useState<number | null>(null); // For Single View
+  const [editId, setEditId] = useState<number | null>(null); // For Edit View
 
   // URL Params
   const [searchParams, setSearchParams] = useSearchParams();
@@ -29,10 +33,7 @@ const ClientsList = () => {
   const prevSearchTerm = useRef(searchTerm);
 
   // --- Fetch Data ---
-  // FIX: Removed 'pagination' from dependencies to prevent infinite re-render loop
   const fetchClients = useCallback(async (page: number) => {
-    // Only set loading true if we don't have data yet (initial load)
-    // We check the state setter to avoid dependency on 'pagination' variable
     setPagination(prev => {
         if (!prev) setLoading(true);
         return prev;
@@ -64,7 +65,6 @@ const ClientsList = () => {
       setPagination(data);
     } catch (err) {
       console.error("Failed to fetch clients:", err);
-      // Only set error if we have no data
       setPagination(prev => {
           if (!prev) setError('Failed to load client list.');
           return prev;
@@ -72,9 +72,9 @@ const ClientsList = () => {
     } finally {
         setLoading(false);
     }
-  }, [searchTerm]); // Only recreate if searchTerm changes
+  }, [searchTerm]);
 
-  // --- Effect 1: Handle Search Debounce ---
+  // --- Search Debounce ---
   useEffect(() => {
     if (isFirstRender.current) {
         isFirstRender.current = false;
@@ -95,12 +95,11 @@ const ClientsList = () => {
     return () => clearTimeout(timer);
   }, [searchTerm, currentPage, setSearchParams, fetchClients]);
 
-  // --- Effect 2: Handle URL Page Change ---
+  // --- Page Change ---
   useEffect(() => {
     fetchClients(currentPage);
   }, [currentPage, fetchClients]);
 
-  // --- Handlers ---
   const handlePageChange = (url: string | null) => {
     if (!url) return;
     try {
@@ -111,6 +110,28 @@ const ClientsList = () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     } catch (e) { console.error(e); }
+  };
+
+  // --- Delete Handler ---
+  const handleDelete = async (id: number) => {
+    if (!window.confirm("Are you sure you want to delete this client?")) return;
+
+    const toastId = showLoading("Deleting client...");
+    try {
+      await deleteClient(id);
+      dismissToast(toastId);
+      showSuccess("Client deleted successfully");
+
+      if (pagination && pagination.data.length === 1 && currentPage > 1) {
+          setSearchParams({ page: (currentPage - 1).toString() });
+      } else {
+          fetchClients(currentPage);
+      }
+    } catch (err: any) {
+      console.error("Delete failed:", err);
+      dismissToast(toastId);
+      showError(err.response?.data?.message || "Failed to delete client.");
+    }
   };
 
   const clients = pagination?.data || [];
@@ -168,7 +189,33 @@ const ClientsList = () => {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-3">
-                            <button className="text-gray-400 hover:text-white" title="Edit"><LuPen size={18} /></button>
+                            
+                            {/* View Button */}
+                            <button 
+                                onClick={() => setViewId(client.id)}
+                                className="text-gray-400 hover:text-yellow-500 transition-colors" 
+                                title="View Details"
+                            >
+                                <LuEye size={18} />
+                            </button>
+
+                            {/* Edit Button */}
+                            <button 
+                                onClick={() => setEditId(client.id)}
+                                className="text-gray-400 hover:text-white transition-colors" 
+                                title="Edit"
+                            >
+                                <LuPen size={18} />
+                            </button>
+                            
+                            {/* Delete Button */}
+                            <button 
+                                onClick={() => handleDelete(client.id)} 
+                                className="text-gray-400 hover:text-red-500 transition-colors" 
+                                title="Delete"
+                            >
+                                <LuTrash2 size={18} />
+                            </button>
                         </div>
                       </td>
                     </tr>
@@ -198,10 +245,23 @@ const ClientsList = () => {
         )}
       </div>
 
-      {/* --- RENDER MODAL --- */}
+      {/* --- RENDER MODALS --- */}
       <ClientCreate 
         isOpen={showCreateModal} 
         onClose={() => setShowCreateModal(false)}
+        onSuccess={() => fetchClients(currentPage)} 
+      />
+
+      <ClientSingle 
+        isOpen={!!viewId} 
+        id={viewId} 
+        onClose={() => setViewId(null)} 
+      />
+
+      <ClientEdit 
+        isOpen={!!editId} 
+        id={editId} 
+        onClose={() => setEditId(null)} 
         onSuccess={() => fetchClients(currentPage)} 
       />
 
