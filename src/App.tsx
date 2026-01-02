@@ -12,6 +12,8 @@ import EmployeeList from './features/emlpoyee/EmployeeList';
 import EmployeeCreate from './features/emlpoyee/EmployeeCreate';
 import AutoLogoutHandler from './components/common/AutoLogoutHandler'; 
 
+import ClientsList from './features/projects/ClientsList';
+
 const App = () => {
   return (
     <BrowserRouter>
@@ -33,6 +35,7 @@ const App = () => {
 
           <Route path="/AllEmployees" element={<EmployeeList />} />
           <Route path="/Employee/create" element={<EmployeeCreate />} />
+          <Route path="/Project/allclients" element={<ClientsList />} />
         </Route>
       </Routes>
     </BrowserRouter>

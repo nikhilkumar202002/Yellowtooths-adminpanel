@@ -4,7 +4,8 @@ import { RxDashboard } from "react-icons/rx";
 import { RiImageAiLine } from "react-icons/ri";
 import { GrUserWorker } from "react-icons/gr";
 import { MdOutlineWorkOutline } from "react-icons/md";
-import { LuChevronDown } from "react-icons/lu"; // Removed LuDot from import
+import { LuChevronDown } from "react-icons/lu";
+import { GoProject } from "react-icons/go";
 
 const MenuList = () => {
   const location = useLocation();
@@ -22,6 +23,14 @@ const MenuList = () => {
       children: [
         { name: "Poster List", path: "/Allposters" },
         { name: "Poster Arrangement", path: "/Poster/sorting" }
+      ]
+    },
+    {
+      name: "Projects",
+      icon: <GoProject />,
+      children: [
+        { name: "All Projects", path: "/Allposters" },
+        { name: "All clients", path: "/Project/allclients" }
       ]
     },
     {

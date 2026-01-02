@@ -64,6 +64,15 @@ export interface Employee {
   updated_at?: string;
 }
 
+export interface Client {
+  id: number;
+  name: string;       // Changed from client_name
+  logo_path: string;  // Changed from client_logo
+  status: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export const getAllPosters = async (
   page: number = 1, 
   search: string = '', 
@@ -274,6 +283,48 @@ export const deleteEmployee = async (id: number | string): Promise<any> => {
     const token = localStorage.getItem('token');
     const response = await api.delete(`/employee-photos/${id}`, {
       headers: { "Authorization": `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+
+// 1. Get All Clients
+export const getAllClients = async (
+  page: number = 1, 
+  search: string = ''
+): Promise<PaginatedResponse<Client>> => {
+  try {
+    const token = localStorage.getItem('token');
+    
+    const params = new URLSearchParams();
+    params.append('page', page.toString());
+    if (search) params.append('search', search);
+
+    // Endpoint: GET /clients
+    const response = await api.get(`/clients/all?${params.toString()}`, {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+    
+    return response.data; 
+  } catch (error) {
+    throw error;
+  }
+};
+
+// 2. Create Client
+export const createClient = async (clientData: FormData): Promise<any> => {
+  try {
+    const token = localStorage.getItem('token');
+    
+    // Endpoint: POST /client
+    const response = await api.post('/client', clientData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        "Authorization": `Bearer ${token}`
+      },
     });
     return response.data;
   } catch (error) {
