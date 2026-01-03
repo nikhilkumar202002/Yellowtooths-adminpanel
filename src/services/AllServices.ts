@@ -73,6 +73,17 @@ export interface Client {
   updated_at?: string;
 }
 
+// --- NEW: Contact Enquiry Interface ---
+export interface ContactEnquiry {
+  id: number;
+  full_name: string;
+  email_address: string;
+  phone_number: string;
+  message: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export const getAllPosters = async (
   page: number = 1, 
   search: string = '', 
@@ -378,4 +389,32 @@ export const updateClient = async (id: number | string, clientData: FormData): P
     });
     return response.data;
   } catch (error) { throw error; }
+};
+
+// --- NEW: Get All Contact Enquiries ---
+export const getAllContactEnquiries = async (
+  page: number = 1,
+  search: string = ''
+): Promise<PaginatedResponse<ContactEnquiry>> => {
+  try {
+    const token = localStorage.getItem('token');
+    
+    const params = new URLSearchParams();
+    params.append('page', page.toString());
+    if (search) params.append('search', search);
+
+    // Endpoint: GET /contact-enquiries
+    const response = await api.get(`/contact-enquiries?${params.toString()}`, {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+    
+    // --- Log the successful response ---
+    console.log("Contact Enquiries API Response:", response.data); 
+    
+    return response.data; 
+  } catch (error) {
+    // --- Log the error details ---
+    console.error("Failed to fetch contact enquiries:", error);
+    throw error;
+  }
 };

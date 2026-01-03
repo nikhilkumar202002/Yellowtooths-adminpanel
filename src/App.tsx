@@ -16,6 +16,8 @@ import ClientsList from './features/projects/ClientsList';
 
 import UserList from './features/auth/UserList';
 
+import ContactEnquiresList from './features/contact-enquires/ContactEnquiresList';
+
 const App = () => {
   return (
     <BrowserRouter>
@@ -40,6 +42,7 @@ const App = () => {
           <Route path="/Project/allclients" element={<ClientsList />} />
 
           <Route path="/AllUsers" element={<UserList />} />
+          <Route path="/AllEnquires" element={<ContactEnquiresList />} />
         </Route>
       </Routes>
     </BrowserRouter>

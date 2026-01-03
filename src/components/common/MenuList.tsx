@@ -6,6 +6,8 @@ import { GrUserWorker } from "react-icons/gr";
 import { MdOutlineWorkOutline } from "react-icons/md";
 import { LuChevronDown } from "react-icons/lu";
 import { GoProject } from "react-icons/go";
+import { TiContacts } from "react-icons/ti";
+import { GrSystem } from "react-icons/gr";
 
 const MenuList = () => {
   const location = useLocation();
@@ -44,10 +46,15 @@ const MenuList = () => {
       path: "/career",
       icon: <MdOutlineWorkOutline />,
     },
+       {
+      name: "Contact Enquires",
+      path: "/AllEnquires",
+      icon: <TiContacts />,
+    },
       {
       name: "System Users",
       path: "/AllUsers",
-      icon: <GrUserWorker />,
+      icon: <GrSystem />,
     },
   ];
 
