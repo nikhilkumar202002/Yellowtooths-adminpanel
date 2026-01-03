@@ -132,7 +132,7 @@ const SuperAdmin = () => {
           <div className="space-y-3">
             <button className="w-full py-3 px-4 rounded-xl bg-neutral-900 border border-neutral-800 text-neutral-300 hover:bg-yellow-500 hover:text-black hover:border-yellow-500 transition-all font-medium text-sm flex items-center justify-center gap-3 group">
               <FiUserPlus className="group-hover:scale-110 transition-transform" /> 
-              Add New Admin
+              Add New User
             </button>
             <button className="w-full py-3 px-4 rounded-xl bg-neutral-900 border border-neutral-800 text-neutral-300 hover:bg-neutral-800 hover:text-white transition-all font-medium text-sm flex items-center justify-center gap-3">
               <FiSettings /> 

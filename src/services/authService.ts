@@ -43,8 +43,62 @@ export const checkAuth = async () => {
   }
 };
 
+// 1. Create User
+export const createUser = async (userData: any) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await api.post("/users", userData, {
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// 2. List All Users (with optional pagination & search)
+export const getAllUsers = async (page: number = 1, search: string = '') => {
+  try {
+    const token = localStorage.getItem('token');
+    
+    const params = new URLSearchParams();
+    params.append('page', page.toString());
+    if (search) params.append('search', search);
+
+    const response = await api.get(`/users?${params.toString()}`, {
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// 3. View Single User
+export const getUserById = async (id: number | string) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await api.get(`/users/${id}`, {
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export default {
   login,
   logout,
   checkAuth,
+  createUser,
+  getAllUsers,
+  getUserById,
+
 };

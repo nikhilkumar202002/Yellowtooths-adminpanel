@@ -30,9 +30,10 @@ const MenuList = () => {
       icon: <GoProject />,
       children: [
         // { name: "All Projects", path: "/Allposters" },
-        { name: "All clients", path: "/Project/allclients" }
+        { name: "All Clients", path: "/Project/allclients" }
       ]
     },
+     
     {
       name: "Employees",
       path: "/AllEmployees",
@@ -42,6 +43,11 @@ const MenuList = () => {
       name: "Career",
       path: "/career",
       icon: <MdOutlineWorkOutline />,
+    },
+      {
+      name: "System Users",
+      path: "/AllUsers",
+      icon: <GrUserWorker />,
     },
   ];
 

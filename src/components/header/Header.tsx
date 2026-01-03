@@ -3,13 +3,32 @@ import { useNavigate } from "react-router-dom";
 import "./HeaderStyles.css";
 import { IoSettingsOutline } from "react-icons/io5";
 import { LuLogOut, LuUser } from "react-icons/lu";
-import Avatar from "../../assets/avatar.jpg";
-import { logout } from "../../services/authService";
+// REMOVED: Avatar import
+import { logout, checkAuth } from "../../services/authService";
 
 const Header = () => {
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // State for Logged-in User
+  const [user, setUser] = useState<{ name: string; role: string } | null>(null);
+
+  // 1. Fetch User Data on Mount
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const data = await checkAuth();
+        // Handle response structure (data.user or data directly)
+        const userData = data.user || data;
+        setUser(userData);
+      } catch (error) {
+        console.error("Failed to fetch user info", error);
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -41,11 +60,18 @@ const Header = () => {
 
           {/* Left */}
           <div className="header-left-content">
-            <h2>Admin Panel</h2>
+              {user && (
+                <div className="hidden md:block text-right mr-2">
+                    <p className="text-xl font-semibold text-white leading-none">{user.name}</p>
+                </div>
+            )}
           </div>
 
           {/* Right */}
           <div className="header-right-icons">
+
+            {/* Display User Name in Main Header */}
+          
 
             <button className="header-icon-button">
               <IoSettingsOutline />
@@ -54,18 +80,20 @@ const Header = () => {
             {/* Profile Dropdown Container */}
             <div className="header-profile-wrapper" ref={dropdownRef}>
               <div 
-                className="header-avatar" 
+                className="header-avatar flex items-center justify-center bg-[#1a1a1a] text-yellow-500" 
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               >
-                <img src={Avatar} alt="User Avatar" />
+                {/* Replaced Image with Icon */}
+                <LuUser size={24} />
               </div>
 
               {/* Dropdown Menu */}
               {isDropdownOpen && (
                 <div className="header-dropdown">
                   <div className="header-dropdown-header">
-                    <p className="user-name">Admin User</p>
-                    <p className="user-role">Super Admin</p>
+                    {/* Dynamic Name & Role */}
+                    <p className="user-name">{user?.name || 'Guest User'}</p>
+                    <p className="user-role capitalize">{user?.role || 'User'}</p>
                   </div>
                   
                   <ul className="header-dropdown-list">
