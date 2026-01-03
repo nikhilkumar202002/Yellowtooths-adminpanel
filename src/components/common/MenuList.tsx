@@ -29,7 +29,7 @@ const MenuList = () => {
       name: "Projects",
       icon: <GoProject />,
       children: [
-        { name: "All Projects", path: "/Allposters" },
+        // { name: "All Projects", path: "/Allposters" },
         { name: "All clients", path: "/Project/allclients" }
       ]
     },

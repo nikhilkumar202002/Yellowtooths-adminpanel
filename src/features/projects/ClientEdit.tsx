@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getClientById, updateClient, type Client } from '../../services/AllServices';
-import { LuX, LuUpload, LuLoader, LuSave, LuImage } from "react-icons/lu";
+import { getClientById, updateClient } from '../../services/AllServices';
+import { LuX, LuUpload, LuLoader, LuSave } from "react-icons/lu";
 import { showSuccess, showError, showLoading, dismissToast } from '../../utils/Toast';
 
 interface ClientEditProps {

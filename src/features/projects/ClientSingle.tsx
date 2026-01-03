@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getClientById, type Client } from '../../services/AllServices';
 import { LuX, LuLoader, LuCalendar, LuCheck } from "react-icons/lu";
 

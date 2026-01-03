@@ -1,28 +1,32 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { 
   getAllClients, 
-  deleteClient, 
+  deleteClient,
+  updateClient, // Ensure this is imported
   type Client, 
   type PaginatedResponse 
 } from '../../services/AllServices';
 import { showSuccess, showError, showLoading, dismissToast } from '../../utils/Toast';
-import { LuSearch, LuPlus, LuPen, LuLoader, LuTrash2, LuEye } from "react-icons/lu"; // Added LuEye
+import { LuSearch, LuPlus, LuPen, LuLoader, LuTrash2, LuEye } from "react-icons/lu";
 
 // Import Modals
 import ClientCreate from './ClientCreate';
-import ClientSingle from './ClientSingle'; // Imported
-import ClientEdit from './ClientEdit';     // Imported
+import ClientSingle from './ClientSingle';
+import ClientEdit from './ClientEdit';
 
 const ClientsList = () => {
   const [pagination, setPagination] = useState<PaginatedResponse<Client> | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string>('');
+  const [, setError] = useState<string>('');
   
   // --- Modal States ---
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [viewId, setViewId] = useState<number | null>(null); // For Single View
-  const [editId, setEditId] = useState<number | null>(null); // For Edit View
+  const [viewId, setViewId] = useState<number | null>(null);
+  const [editId, setEditId] = useState<number | null>(null);
+
+  // --- Toggle State (Added) ---
+  const [togglingId, setTogglingId] = useState<number | null>(null);
 
   // URL Params
   const [searchParams, setSearchParams] = useSearchParams();
@@ -112,6 +116,54 @@ const ClientsList = () => {
     } catch (e) { console.error(e); }
   };
 
+  // --- Status Toggle Handler (Added) ---
+  const handleStatusToggle = async (client: Client) => {
+    if (togglingId === client.id) return;
+    setTogglingId(client.id);
+
+    const currentStatus = client.status;
+    const newStatus = currentStatus === "1" ? "0" : "1";
+    
+    // 1. Optimistic UI Update
+    setPagination(prev => {
+        if (!prev) return null;
+        return {
+            ...prev,
+            data: prev.data.map(item => 
+                item.id === client.id ? { ...item, status: newStatus } : item
+            )
+        };
+    });
+
+    try {
+        // 2. API Call
+        // We assume updateClient takes FormData and requires 'name' + 'status'
+        const formData = new FormData();
+        formData.append('name', client.name); 
+        formData.append('status', newStatus);
+        
+        await updateClient(client.id, formData);
+        showSuccess(`Status updated to ${newStatus === "1" ? 'Active' : 'Inactive'}`);
+
+    } catch (err: any) {
+        console.error("Status update failed:", err);
+        showError("Failed to update status");
+        
+        // 3. Revert on failure
+        setPagination(prev => {
+            if (!prev) return null;
+            return {
+                ...prev,
+                data: prev.data.map(item => 
+                    item.id === client.id ? { ...item, status: currentStatus } : item
+                )
+            };
+        });
+    } finally {
+        setTogglingId(null);
+    }
+  };
+
   // --- Delete Handler ---
   const handleDelete = async (id: number) => {
     if (!window.confirm("Are you sure you want to delete this client?")) return;
@@ -184,13 +236,29 @@ const ClientsList = () => {
                         <div className="font-medium text-white">{client.name}</div>
                         <div className="text-xs text-gray-500 mt-0.5">ID: #{client.id}</div>
                       </td>
+                      
+                      {/* --- MODIFIED: Status Toggle --- */}
                       <td className="px-6 py-4 text-center">
-                        {client.status === "1" ? <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-400 border border-green-500/20"><span className="w-1.5 h-1.5 rounded-full bg-green-400"></span> Active</span> : <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20"><span className="w-1.5 h-1.5 rounded-full bg-red-400"></span> Inactive</span>}
+                        <button
+                            onClick={() => handleStatusToggle(client)}
+                            disabled={togglingId === client.id}
+                            className={`
+                                relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-yellow-500/50 
+                                ${client.status === "1" ? 'bg-green-500' : 'bg-gray-700'} 
+                                ${togglingId === client.id ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                            `}
+                        >
+                            <span 
+                                className={`
+                                    inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ease-in-out 
+                                    ${client.status === "1" ? 'translate-x-6' : 'translate-x-1'}
+                                `} 
+                            />
+                        </button>
                       </td>
+
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-3">
-                            
-                            {/* View Button */}
                             <button 
                                 onClick={() => setViewId(client.id)}
                                 className="text-gray-400 hover:text-yellow-500 transition-colors" 
@@ -198,8 +266,6 @@ const ClientsList = () => {
                             >
                                 <LuEye size={18} />
                             </button>
-
-                            {/* Edit Button */}
                             <button 
                                 onClick={() => setEditId(client.id)}
                                 className="text-gray-400 hover:text-white transition-colors" 
@@ -207,8 +273,6 @@ const ClientsList = () => {
                             >
                                 <LuPen size={18} />
                             </button>
-                            
-                            {/* Delete Button */}
                             <button 
                                 onClick={() => handleDelete(client.id)} 
                                 className="text-gray-400 hover:text-red-500 transition-colors" 
