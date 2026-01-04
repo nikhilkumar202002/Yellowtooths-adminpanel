@@ -93,6 +93,98 @@ export const getUserById = async (id: number | string) => {
   }
 };
 
+// --- NEW: ROLE MANAGEMENT ENDPOINTS ---
+
+// 1. Get All Roles
+export const getAllRoles = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await api.get("/roles", {
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// 2. Create Role
+export const createRole = async (roleData: any) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await api.post("/roles", roleData, {
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// 3. View Single Role
+export const getRoleById = async (id: number | string) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await api.get(`/roles/${id}`, {
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// 4. Update Role
+export const updateRole = async (id: number | string, roleData: any) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await api.put(`/roles/${id}`, roleData, {
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// 5. Delete Role
+export const deleteRole = async (id: number | string) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await api.delete(`/roles/${id}`, {
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// 6. Get Active Roles
+export const getActiveRoles = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await api.get("/roles/active", {
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export default {
   login,
   logout,
@@ -100,5 +192,12 @@ export default {
   createUser,
   getAllUsers,
   getUserById,
+
+  getAllRoles,
+  createRole,
+  getRoleById,
+  updateRole,
+  deleteRole,
+  getActiveRoles
 
 };

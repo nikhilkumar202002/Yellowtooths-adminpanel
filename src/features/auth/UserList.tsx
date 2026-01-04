@@ -13,7 +13,8 @@ export interface User {
   id: number;
   name: string;
   email: string;
-  role: string;          // admin or user
+  // Updated: role can be an object (from relationship) or a string
+  role: string | { id: number; name: string; [key: string]: any }; 
   phone_number: string;
   country_code: string;
   country: string;
@@ -133,7 +134,6 @@ const UserList = () => {
         </div>
 
         <div className="flex items-center gap-3">
-            {/* --- NEW: Total Users Count --- */}
             {pagination && (
                 <div className="bg-yellow-500 text-black font-bold text-xs px-3 py-1 rounded-full whitespace-nowrap">
                     {pagination.total} USERS
@@ -155,7 +155,6 @@ const UserList = () => {
           <table className="w-full text-left text-sm text-gray-400">
             <thead className="bg-[#1a1a1a] text-xs uppercase font-semibold text-gray-200">
               <tr>
-                {/* --- NEW: Sl. No Column Header --- */}
                 <th className="px-6 py-4 w-16">#</th> 
                 <th className="px-6 py-4">Name</th>
                 <th className="px-6 py-4">Contact</th>
@@ -166,10 +165,18 @@ const UserList = () => {
             </thead>
             <tbody className="divide-y divide-gray-800">
               {users.length > 0 ? (
-                  users.map((user, index) => (
+                  users.map((user, index) => {
+                    // Extract Role Name correctly whether it's an object or string
+                    const roleName = typeof user.role === 'object' && user.role !== null 
+                        ? user.role.name 
+                        : String(user.role || 'User');
+                    
+                    const isAdmin = roleName.toLowerCase() === 'admin';
+
+                    return (
                     <tr key={user.id} className="hover:bg-yellow-500/5 transition-colors group">
                       
-                      {/* --- NEW: Sl. No Calculation --- */}
+                      {/* Sl. No */}
                       <td className="px-6 py-4 font-mono text-gray-500 text-xs">
                          {(pagination?.from || 1) + index}
                       </td>
@@ -190,15 +197,15 @@ const UserList = () => {
                         </div>
                       </td>
 
-                      {/* Role */}
+                      {/* Role - Updated Logic */}
                       <td className="px-6 py-4">
-                        {user.role === 'admin' ? (
+                        {isAdmin ? (
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20 uppercase tracking-wide">
-                                <LuShield size={12} /> Admin
+                                <LuShield size={12} /> {roleName}
                             </span>
                         ) : (
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-gray-800 text-gray-300 border border-gray-700 uppercase tracking-wide">
-                                <LuUser size={12} /> User
+                                <LuUser size={12} /> {roleName}
                             </span>
                         )}
                       </td>
@@ -233,7 +240,8 @@ const UserList = () => {
                         </div>
                       </td>
                     </tr>
-                  ))
+                   );
+                  })
               ) : (
                   <tr><td colSpan={6} className="px-6 py-12 text-center text-gray-500"><p className="text-lg font-medium">No users found</p></td></tr>
               )}
@@ -241,7 +249,7 @@ const UserList = () => {
           </table>
         </div>
 
-        {/* --- Pagination Corrected --- */}
+        {/* Pagination */}
         {pagination && pagination.links && pagination.links.length > 3 && (
           <div className="bg-[#1a1a1a] border-t border-gray-800 px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
             <span className="text-sm text-gray-500">
@@ -249,7 +257,6 @@ const UserList = () => {
             </span>
             <div className="flex flex-wrap items-center gap-1">
               {pagination.links.map((link, index) => {
-                 // Replace HTML entities for cleaner rendering
                  const label = link.label
                     .replace('&laquo; Previous', '← Prev')
                     .replace('Next &raquo;', 'Next →');
@@ -277,7 +284,7 @@ const UserList = () => {
         )}
       </div>
 
-      {/* --- Modals --- */}
+      {/* Modals */}
       <UserCreate 
         isOpen={showCreateModal} 
         onClose={() => setShowCreateModal(false)} 

@@ -56,6 +56,13 @@ const MenuList = () => {
       path: "/AllUsers",
       icon: <GrSystem />,
     },
+      {
+      name: "Settings",
+      icon: <RiImageAiLine />,
+      children: [
+        { name: "system Roles", path: "/Allroles" },
+      ]
+    },
   ];
 
   // Auto-expand logic

@@ -27,11 +27,10 @@ const UserSingle = ({ isOpen, onClose, id }: UserSingleProps) => {
     setError('');
     try {
       const response = await getUserById(userId);
-      // *** FIX: Extract the nested 'user' object from the response ***
+      // Handle different response structures
       if (response && response.user) {
         setUser(response.user);
       } else {
-        // Fallback in case structure varies
         setUser(response);
       }
     } catch (err) {
@@ -43,6 +42,16 @@ const UserSingle = ({ isOpen, onClose, id }: UserSingleProps) => {
   };
 
   if (!isOpen) return null;
+
+  // Helper to safely get role name
+  const getRoleName = (role: any) => {
+    if (!role) return 'USER';
+    if (typeof role === 'object' && role.name) return role.name.toUpperCase();
+    return String(role).toUpperCase();
+  };
+
+  const roleName = user ? getRoleName(user.role) : 'USER';
+  const isAdmin = roleName === 'ADMIN';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
@@ -80,20 +89,20 @@ const UserSingle = ({ isOpen, onClose, id }: UserSingleProps) => {
                 {/* Role Badge */}
                 <div className={`
                     absolute bottom-0 right-0 px-3 py-1 rounded-full text-xs font-bold border shadow-lg flex items-center gap-1
-                    ${user.role === 'admin' 
+                    ${isAdmin
                         ? 'bg-purple-600 text-white border-purple-400' 
                         : 'bg-gray-700 text-gray-200 border-gray-600'
                     }
                 `}>
-                    {user.role === 'admin' ? <LuShield size={10} /> : <LuUser size={10} />}
-                    {user.role ? user.role.toUpperCase() : 'USER'}
+                    {isAdmin ? <LuShield size={10} /> : <LuUser size={10} />}
+                    {roleName}
                 </div>
               </div>
 
               {/* Name & Basic Info */}
               <div className="space-y-1">
                  <h3 className="text-2xl font-bold text-white tracking-tight">{user.name}</h3>
-              
+                 <p className="text-gray-500 text-sm">Member since {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}</p>
               </div>
 
               {/* Detailed Info Grid */}
@@ -136,7 +145,6 @@ const UserSingle = ({ isOpen, onClose, id }: UserSingleProps) => {
                         <div className="text-sm text-gray-200">{user.country || 'N/A'}</div>
                     </div>
                  </div>
-
 
               </div>
 

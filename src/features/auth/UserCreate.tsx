@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { createUser } from '../../services/authService';
-import { LuX, LuLoader, LuSave, LuUser, LuPhone, LuMapPin, LuGlobe } from "react-icons/lu";
+import React, { useState, useEffect } from 'react';
+import { createUser, getActiveRoles } from '../../services/authService';
+import { LuX, LuLoader, LuSave, LuUser, LuPhone, LuGlobe } from "react-icons/lu";
 import { showSuccess, showError, showLoading, dismissToast } from '../../utils/Toast';
 
 interface UserCreateProps {
@@ -11,17 +11,40 @@ interface UserCreateProps {
 
 const UserCreate = ({ isOpen, onClose, onSuccess }: UserCreateProps) => {
   const [submitting, setSubmitting] = useState(false);
+  const [roles, setRoles] = useState<any[]>([]); 
 
-  // Form State
+  // Form State - Changed 'role' to 'role_id'
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
-    role: 'user', // Default to user
+    role_id: '', // Now storing ID
     country_code: '+91',
     phone_number: '',
     country: 'India',
   });
+
+  // Fetch roles when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      fetchActiveRoles();
+    }
+  }, [isOpen]);
+
+  const fetchActiveRoles = async () => {
+    try {
+      const data = await getActiveRoles();
+      const rolesList = Array.isArray(data) ? data : (data.data || []);
+      setRoles(rolesList);
+      
+      // Optional: Auto-select first role if list exists
+      if (rolesList.length > 0 && !formData.role_id) {
+         setFormData(prev => ({ ...prev, role_id: rolesList[0].id }));
+      }
+    } catch (error) {
+      console.error("Failed to fetch active roles", error);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -30,8 +53,8 @@ const UserCreate = ({ isOpen, onClose, onSuccess }: UserCreateProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validation
-    if (!formData.name || !formData.email || !formData.password || !formData.phone_number) {
+    // Validation - Check role_id
+    if (!formData.name || !formData.email || !formData.password || !formData.phone_number || !formData.role_id) {
         showError("Please fill in all required fields.");
         return;
     }
@@ -50,7 +73,7 @@ const UserCreate = ({ isOpen, onClose, onSuccess }: UserCreateProps) => {
         name: '',
         email: '',
         password: '',
-        role: 'user',
+        role_id: '',
         country_code: '+91',
         phone_number: '',
         country: 'India',
@@ -61,7 +84,9 @@ const UserCreate = ({ isOpen, onClose, onSuccess }: UserCreateProps) => {
     } catch (err: any) {
       console.error(err);
       dismissToast(toastId);
-      showError(err.response?.data?.message || "Failed to create user.");
+      // Show backend error message if available
+      const backendError = err.response?.data?.message || err.response?.data?.errors?.role_id?.[0];
+      showError(backendError || "Failed to create user.");
     } finally {
       setSubmitting(false);
     }
@@ -131,15 +156,23 @@ const UserCreate = ({ isOpen, onClose, onSuccess }: UserCreateProps) => {
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-400">Role</label>
+                        <label className="text-sm font-medium text-gray-400">Role <span className="text-red-500">*</span></label>
                         <select 
-                            name="role"
-                            value={formData.role}
+                            name="role_id" 
+                            value={formData.role_id}
                             onChange={handleChange}
-                            className="w-full bg-[#121212] border border-gray-700 rounded-lg p-3 text-white focus:border-yellow-500 outline-none cursor-pointer"
+                            className="w-full bg-[#121212] border border-gray-700 rounded-lg p-3 text-white focus:border-yellow-500 outline-none cursor-pointer capitalize"
                         >
-                            <option value="user">User</option>
-                            <option value="admin">Admin</option>
+                            <option value="" disabled>Select Role</option>
+                            {roles.length > 0 ? (
+                                roles.map((role: any) => (
+                                    <option key={role.id} value={role.id}> {/* Value is now ID */}
+                                        {role.name}
+                                    </option>
+                                ))
+                            ) : (
+                                <option value="" disabled>Loading roles...</option>
+                            )}
                         </select>
                     </div>
                 </div>
